@@ -26,6 +26,8 @@ export interface CertificateTemplateOptions {
   qcaSrc?: string | null;
   /** Optional signature image for the Program Coordinator line. */
   sigSrc?: string | null;
+  /** Optional seal image; falls back to the engraved ZYRO seal when empty. */
+  sealSrc?: string | null;
   fontCss?: string | null;
 }
 
@@ -147,6 +149,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     qrSrc,
     oLogoSrc,
     sigSrc,
+    sealSrc,
     fontCss,
   } = opts;
 
@@ -481,7 +484,9 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
               <div class="seal-qr">
                 <div class="seal-col">
                   <div class="seal-gold" role="img" aria-label="ZYRO verified seal">
-                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                    ${sealSrc
+                      ? `<img src="${sealSrc}" alt="" style="width:100%;height:100%;object-fit:contain;display:block" />`
+                      : `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
                       <defs>
                         <radialGradient id="zyro-seal-gold" cx="35%" cy="30%" r="78%">
                           <stop offset="0%" stop-color="#e8ca7e"/>
@@ -493,7 +498,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
                       <circle cx="40" cy="40" r="30" fill="none" stroke="#fff6df" stroke-width="1.25" opacity="0.95"/>
                       <circle cx="40" cy="40" r="27" fill="none" stroke="#fff6df" stroke-width="0.75" opacity="0.7"/>
                       <text x="40" y="44" text-anchor="middle" font-family="Cinzel, serif" font-size="11" font-weight="700" letter-spacing="1.6" fill="#fffaf0">ZYRO</text>
-                    </svg>
+                    </svg>`}
                   </div>
                   <div class="badge-text">VERIFIED SECURE</div>
                 </div>
