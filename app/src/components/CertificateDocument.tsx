@@ -80,6 +80,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
   const isoDataUrlRef = useRef<string | null>(null);
   const qcaDataUrlRef = useRef<string | null>(null);
   const oLogoDataUrlRef = useRef<string | null>(null);
+  const sigDataUrlRef = useRef<string | null>(null);
   const watermarkDataUrlRef = useRef<string | null>(null);
 
   // Real logo assets (all prefetched → inlined into the print window).
@@ -89,6 +90,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     iso: `${window.location.origin}/logos/iso-9001-sgs.png`,
     qca: `${window.location.origin}/logos/tuv-rheinland-iso-9001.png`,
     o: `${window.location.origin}/zyro-logo.png`,
+    sig: `${window.location.origin}/signatures/program-coordinator1.jpeg`,
   }), []);
   const logoRefs = {
     watermark: watermarkDataUrlRef,
@@ -96,6 +98,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     iso: isoDataUrlRef,
     qca: qcaDataUrlRef,
     o: oLogoDataUrlRef,
+    sig: sigDataUrlRef,
   } as const;
 
   useEffect(() => {
@@ -199,6 +202,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
       isoSrc: LOGO_URLS.iso,
       oLogoSrc: LOGO_URLS.o,
       qcaSrc: LOGO_URLS.qca,
+      sigSrc: LOGO_URLS.sig,
       fontCss: null,
     }),
     [baseOptions, qrCodeUrl, LOGO_URLS]
@@ -216,6 +220,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
       isoSrc: isoDataUrlRef.current ?? LOGO_URLS.iso,
       oLogoSrc: oLogoDataUrlRef.current ?? LOGO_URLS.o,
       qcaSrc: qcaDataUrlRef.current ?? LOGO_URLS.qca,
+      sigSrc: sigDataUrlRef.current ?? LOGO_URLS.sig,
       fontCss: fontCssRef.current,
     });
 

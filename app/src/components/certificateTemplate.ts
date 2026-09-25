@@ -24,6 +24,8 @@ export interface CertificateTemplateOptions {
   oLogoSrc: string;
   /** Optional real QCA/partner logo. Falls back to the generated badge when empty. */
   qcaSrc?: string | null;
+  /** Optional signature image for the Program Coordinator line. */
+  sigSrc?: string | null;
   fontCss?: string | null;
 }
 
@@ -144,6 +146,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     issueDateStr,
     qrSrc,
     oLogoSrc,
+    sigSrc,
     fontCss,
   } = opts;
 
@@ -367,7 +370,17 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     }
     .sig-block { display: flex; flex-direction: column; align-items: center; text-align: center; }
     .sig-block.sig-dir { transform: translate(14px, 0); }
-    .sig-line { width: 200px; height: 42px; border-bottom: 1.5px solid #666; margin-bottom: 5px; }
+    .sig-line {
+      width: 200px;
+      height: 42px;
+      border-bottom: 1.5px solid #666;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: visible;
+    }
+    .sig-img { max-height: 40px; max-width: 190px; width: auto; object-fit: contain; display: block; margin-bottom: 2px; }
     .sig-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
     .sig-company { font-size: 12px; font-weight: 700; color: #333; letter-spacing: .5px; margin-top: 3px; }
     .sig-meta { margin-top: 8px; font-size: 9.5px; font-weight: 600; color: #555; letter-spacing: .4px; line-height: 1.55; }
@@ -460,7 +473,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
 
           <div class="footer-row">
             <div class="sig-block">
-              <div class="sig-line" aria-hidden="true"></div>
+              <div class="sig-line" aria-hidden="true">${sigSrc ? `<img class="sig-img" src="${sigSrc}" alt="" />` : ''}</div>
               <div class="sig-title">Program Coordinator</div>
               <div class="sig-company">${companyName}</div>
             </div>
