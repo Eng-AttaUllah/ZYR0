@@ -113,6 +113,25 @@ export function noiseSvg(): string {
 </svg>`;
 }
 
+/** Scalloped disc path for the verification seal (flat gold, print-style). */
+export function scallopedSealPath(cx: number, cy: number, r: number, bumps: number): string {
+  const step = (Math.PI * 2) / bumps;
+  let d = '';
+  for (let i = 0; i < bumps; i++) {
+    const a0 = i * step - Math.PI / 2;
+    const a1 = (i + 1) * step - Math.PI / 2;
+    const x0 = cx + r * Math.cos(a0);
+    const y0 = cy + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1);
+    const y1 = cy + r * Math.sin(a1);
+    const chord = Math.hypot(x1 - x0, y1 - y0);
+    const arcR = chord * 0.62;
+    if (i === 0) d += `M${x0.toFixed(2)} ${y0.toFixed(2)} `;
+    d += `A${arcR.toFixed(2)} ${arcR.toFixed(2)} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)} `;
+  }
+  return d + 'Z';
+}
+
 // ── Main document builder ──────────────────────────────────────────────────
 
 export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
@@ -359,19 +378,14 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .seal-gold {
       width: 80px;
       height: 80px;
-      background: radial-gradient(circle, #f59e0b 0%, #d97706 100%);
-      border-radius: 50%;
-      border: 4px dashed #fff;
-      box-shadow: 0 0 0 4px #d97706, 0 4px 10px rgba(0,0,0,.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
+      display: block;
+      line-height: 0;
     }
-    .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 7px; color: #b89c56; letter-spacing: 1.5px; }
+    .seal-gold svg { width: 100%; height: 100%; display: block; }
+    .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 7px; color: #b89c56; letter-spacing: 1.5px; line-height: 1; }
     .qr { display: flex; flex-direction: column; align-items: center; gap: 5px; }
     .qr-img { width: 70px; height: 70px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; }
-    .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #4a4a4a; }
+    .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #4a4a4a; line-height: 1; margin-bottom: 1.5px; }
 
     @media print {
       body { width: 297mm; height: 210mm; }
@@ -453,10 +467,19 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
             <div class="center-col">
               <div class="seal-qr">
                 <div class="seal-col">
-                  <div class="seal-gold">
-                    <svg style="width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:2.2" viewBox="0 0 24 24">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      <path d="M9 11l2 2 4-4"/>
+                  <div class="seal-gold" role="img" aria-label="ZYRO verified seal">
+                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="zyro-seal-gold" cx="35%" cy="30%" r="78%">
+                          <stop offset="0%" stop-color="#e8ca7e"/>
+                          <stop offset="55%" stop-color="#c9a757"/>
+                          <stop offset="100%" stop-color="#a6853d"/>
+                        </radialGradient>
+                      </defs>
+                      <path d="${scallopedSealPath(40, 40, 36, 24)}" fill="url(#zyro-seal-gold)" stroke="#8f7233" stroke-width="1.4" stroke-linejoin="round"/>
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#fff6df" stroke-width="1.25" opacity="0.95"/>
+                      <circle cx="40" cy="40" r="27" fill="none" stroke="#fff6df" stroke-width="0.75" opacity="0.7"/>
+                      <text x="40" y="44" text-anchor="middle" font-family="Cinzel, serif" font-size="11" font-weight="700" letter-spacing="1.6" fill="#fffaf0">ZYRO</text>
                     </svg>
                   </div>
                   <div class="badge-text">VERIFIED SECURE</div>
