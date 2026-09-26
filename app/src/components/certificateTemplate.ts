@@ -403,7 +403,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .seal-gold svg { width: 100%; height: 100%; display: block; }
     .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 7px; color: #b89c56; letter-spacing: 1.5px; line-height: 1; }
     .qr { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .qr-img { width: 70px; height: 70px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; }
+    .qr-img { width: 70px; height: 70px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; margin-bottom: 10px; }
     .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #4a4a4a; line-height: 1; margin-bottom: 1.5px; }
 
     @media print {
