@@ -81,6 +81,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
   const qcaDataUrlRef = useRef<string | null>(null);
   const oLogoDataUrlRef = useRef<string | null>(null);
   const sigDataUrlRef = useRef<string | null>(null);
+  const dirSigDataUrlRef = useRef<string | null>(null);
   const sealDataUrlRef = useRef<string | null>(null);
   const watermarkDataUrlRef = useRef<string | null>(null);
 
@@ -91,7 +92,8 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     iso: `${window.location.origin}/logos/iso-9001-sgs.png`,
     qca: `${window.location.origin}/logos/tuv-rheinland-iso-9001.png`,
     o: `${window.location.origin}/zyro-logo.png`,
-    sig: `${window.location.origin}/signatures/program-coordinator1.jpeg`,
+    sig: `${window.location.origin}/signatures/program-coordinator.png`,
+    dirSig: `${window.location.origin}/signatures/director.png`,
     seal: `${window.location.origin}/seal.png`,
   }), []);
   const logoRefs = {
@@ -101,6 +103,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     qca: qcaDataUrlRef,
     o: oLogoDataUrlRef,
     sig: sigDataUrlRef,
+    dirSig: dirSigDataUrlRef,
     seal: sealDataUrlRef,
   } as const;
 
@@ -206,6 +209,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
       oLogoSrc: LOGO_URLS.o,
       qcaSrc: LOGO_URLS.qca,
       sigSrc: LOGO_URLS.sig,
+      dirSigSrc: LOGO_URLS.dirSig,
       sealSrc: LOGO_URLS.seal,
       fontCss: null,
     }),
@@ -225,6 +229,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
       oLogoSrc: oLogoDataUrlRef.current ?? LOGO_URLS.o,
       qcaSrc: qcaDataUrlRef.current ?? LOGO_URLS.qca,
       sigSrc: sigDataUrlRef.current ?? LOGO_URLS.sig,
+      dirSigSrc: dirSigDataUrlRef.current ?? LOGO_URLS.dirSig,
       sealSrc: sealDataUrlRef.current ?? LOGO_URLS.seal,
       fontCss: fontCssRef.current,
     });

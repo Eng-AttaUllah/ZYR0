@@ -26,6 +26,8 @@ export interface CertificateTemplateOptions {
   qcaSrc?: string | null;
   /** Optional signature image for the Program Coordinator line. */
   sigSrc?: string | null;
+  /** Optional signature image for the ZYRO Director line. */
+  dirSigSrc?: string | null;
   /** Optional seal image; falls back to the engraved ZYRO seal when empty. */
   sealSrc?: string | null;
   fontCss?: string | null;
@@ -149,6 +151,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     qrSrc,
     oLogoSrc,
     sigSrc,
+    dirSigSrc,
     sealSrc,
     fontCss,
   } = opts;
@@ -375,7 +378,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .sig-block.sig-dir { transform: translate(14px, 0); }
     .sig-line {
       width: 200px;
-      height: 42px;
+      height: 62px;
       border-bottom: 1.5px solid #666;
       margin-bottom: 5px;
       display: flex;
@@ -383,7 +386,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
       justify-content: center;
       overflow: visible;
     }
-    .sig-img { max-height: 40px; max-width: 190px; width: auto; object-fit: contain; display: block; margin-bottom: 2px; }
+    .sig-img { max-height: 60px; max-width: 250px; width: auto; object-fit: contain; display: block; margin-bottom: 2px; }
     .sig-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
     .sig-company { font-size: 12px; font-weight: 700; color: #333; letter-spacing: .5px; margin-top: 3px; }
     .sig-meta { margin-top: 8px; font-size: 9.5px; font-weight: 600; color: #555; letter-spacing: .4px; line-height: 1.55; }
@@ -509,7 +512,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
               </div>
             </div>
             <div class="sig-block sig-dir">
-              <div class="sig-line" aria-hidden="true"></div>
+              <div class="sig-line" aria-hidden="true">${dirSigSrc ? `<img class="sig-img" src="${dirSigSrc}" alt="" />` : ''}</div>
               <div class="sig-title">ZYRO Director</div>
             </div>
           </div>
