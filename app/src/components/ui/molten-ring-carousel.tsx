@@ -646,11 +646,30 @@ export function MoltenRingCarousel({
 
     let dragFrom: number | null = null;
     let dragTravel = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
     const onDown = (event: PointerEvent) => {
-      dragFrom = event.clientY;
+      touchStartX = event.clientX;
+      touchStartY = event.clientY;
+      touchStartTime = performance.now();
       dragTravel = 0;
       tween = null;
-      canvas.setPointerCapture(event.pointerId);
+
+      // In scrollControlled mode on touch devices, NEVER capture pointer!
+      // This allows the mobile browser to natively handle vertical touch scrolling.
+      if (scrollControlled && event.pointerType === "touch") {
+        dragFrom = null;
+        return;
+      }
+
+      dragFrom = event.clientY;
+      if (event.pointerType !== "touch") {
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch {}
+      }
     };
     const onMove = (event: PointerEvent) => {
       const box = canvas.getBoundingClientRect();
@@ -659,7 +678,8 @@ export function MoltenRingCarousel({
       pointerSpeed = Math.hypot(nx - pointerX, ny - pointerY);
       pointerX = nx;
       pointerY = ny;
-      if (dragFrom !== null) {
+
+      if (dragFrom !== null && !scrollControlled) {
         const travel = dragFrom - event.clientY;
         dragTravel += Math.abs(travel);
         dragFrom = event.clientY;
@@ -668,10 +688,24 @@ export function MoltenRingCarousel({
         snapped = false;
       }
     };
-    const onUp = () => {
-      const wasClick = dragFrom !== null && dragTravel < CLICK_SLOP;
+    const onUp = (event?: PointerEvent) => {
+      if (event && canvas.hasPointerCapture(event.pointerId)) {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch {}
+      }
+
+      const isTouch = event?.pointerType === "touch";
+      const totalMove = event
+        ? Math.hypot(event.clientX - touchStartX, event.clientY - touchStartY)
+        : dragTravel;
+      const elapsedTime = performance.now() - touchStartTime;
+
+      const wasTap = (isTouch && totalMove < 15 && elapsedTime < 400) ||
+                    (!isTouch && dragFrom !== null && dragTravel < CLICK_SLOP);
+
       dragFrom = null;
-      if (!wasClick || hovered < 0) return;
+      if (!wasTap || hovered < 0) return;
 
       const activeIdx = (((Math.round(progress) + FRONT) % count) + count) % count;
 
@@ -694,14 +728,16 @@ export function MoltenRingCarousel({
         return;
       }
 
-      // Rotate to front slot
-      const want = hovered - FRONT;
-      tween = {
-        from: goal,
-        to: want + Math.round((goal - want) / count) * count,
-        at: performance.now(),
-      };
-      snapped = true;
+      if (!scrollControlled) {
+        // Rotate to front slot
+        const want = hovered - FRONT;
+        tween = {
+          from: goal,
+          to: want + Math.round((goal - want) / count) * count,
+          at: performance.now(),
+        };
+        snapped = true;
+      }
     };
     const onLeave = () => {
       pointerX = -1;
@@ -1022,7 +1058,10 @@ export function MoltenRingCarousel({
         role="listbox"
         aria-label={brand ?? "Gallery"}
         aria-activedescendant={`molten-ring-${active}`}
-        className="text-foreground focus-visible:outline-foreground absolute inset-0 h-full w-full cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
+        className={cn(
+          "text-foreground focus-visible:outline-foreground absolute inset-0 h-full w-full cursor-grab outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing",
+          scrollControlled ? "touch-pan-y" : "touch-pan-x"
+        )}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" || event.key === "ArrowRight") step.current(1);
           else if (event.key === "ArrowUp" || event.key === "ArrowLeft") step.current(-1);
