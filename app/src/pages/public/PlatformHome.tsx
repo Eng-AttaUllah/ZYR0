@@ -3,7 +3,7 @@ import { SEO } from '@/components/SEO';
 import Header from '@/components/nav/Header';
 import { ShaderHero } from '@/components/ui/shader-hero';
 import LogoWall from '@/components/platform-home/LogoWall';
-import BentoProductGrid from '@/components/platform-home/BentoProductGrid';
+import PlaygroundShowcase from '@/components/platform-home/PlaygroundShowcase';
 import SkillsSection from '@/components/platform-home/SkillsSection';
 import BlogPreviewSection from '@/components/platform-home/BlogPreviewSection';
 import CTASection from '@/components/platform-home/CTASection';
@@ -50,8 +50,8 @@ export default function PlatformHome() {
         {/* Partner & Infrastructure Logos — authentic SVGs */}
         <LogoWall />
 
-        {/* Core Products Showcase — enriched Bento Grid with UI mockups */}
-        <BentoProductGrid />
+        {/* The Playground — WebGL2 Molten Ring liquid interactive carousel */}
+        <PlaygroundShowcase />
 
         {/* Why ZYR0 — GSAP horizontal scroll timeline */}
         <Suspense fallback={<SectionFallback />}>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" width="600" height="900">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f0a14"/>
+      <stop offset="50%" stop-color="#2a0d1d"/>
+      <stop offset="100%" stop-color="#0a0307"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="600" height="900" fill="url(#bg)"/>
+  <circle cx="300" cy="380" r="280" fill="url(#glow)"/>
+
+  <!-- Subtle grid lines -->
+  <g stroke="#f43f5e" stroke-opacity="0.08" stroke-width="1">
+    <line x1="80" y1="0" x2="80" y2="900"/>
+    <line x1="200" y1="0" x2="200" y2="900"/>
+    <line x1="320" y1="0" x2="320" y2="900"/>
+    <line x1="440" y1="0" x2="440" y2="900"/>
+    <line x1="520" y1="0" x2="520" y2="900"/>
+    <line x1="0" y1="180" x2="600" y2="180"/>
+    <line x1="0" y1="360" x2="600" y2="360"/>
+    <line x1="0" y1="540" x2="600" y2="540"/>
+    <line x1="0" y1="720" x2="600" y2="720"/>
+  </g>
+
+  <!-- Research Agent UI -->
+  <g transform="translate(60, 220)">
+    <rect width="480" height="460" rx="20" fill="#14070e" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1.5"/>
+    <rect width="480" height="460" rx="20" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1"/>
+
+    <!-- Header bar -->
+    <rect width="480" height="48" rx="20" fill="#2d0b1a" fill-opacity="0.8"/>
+    <circle cx="32" cy="24" r="5" fill="#f43f5e" fill-opacity="0.8"/>
+    <circle cx="48" cy="24" r="5" fill="#eab308" fill-opacity="0.8"/>
+    <circle cx="64" cy="24" r="5" fill="#10b981" fill-opacity="0.8"/>
+    <text x="240" y="30" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#fda4af" text-anchor="middle">Research Agent · Deep Synthesis</text>
+
+    <!-- Content: Synthesis Graph & Citations -->
+    <g transform="translate(36, 75)">
+      <!-- Search status pill -->
+      <rect width="408" height="40" rx="10" fill="#240815" stroke="#4c0519" stroke-width="1"/>
+      <circle cx="24" cy="20" r="5" fill="#f43f5e"/>
+      <text x="40" y="25" font-family="system-ui, sans-serif" font-size="12" font-weight="500" fill="#fecdd3">Synthesizing 142 arXiv papers &amp; cross-validating proofs...</text>
+
+      <!-- Knowledge Citation Tree -->
+      <g transform="translate(0, 56)">
+        <rect width="408" height="240" rx="12" fill="#180710" stroke="#3b0716" stroke-width="1"/>
+        
+        <!-- Node network diagram -->
+        <g stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.4">
+          <line x1="80" y1="60" x2="204" y2="40"/>
+          <line x1="204" y1="40" x2="330" y2="70"/>
+          <line x1="80" y1="60" x2="140" y2="130"/>
+          <line x1="204" y1="40" x2="250" y2="140"/>
+          <line x1="140" y1="130" x2="250" y2="140"/>
+          <line x1="250" y1="140" x2="330" y2="70"/>
+        </g>
+
+        <!-- Nodes -->
+        <g>
+          <circle cx="80" cy="60" r="16" fill="#4c0519" stroke="#f43f5e" stroke-width="2"/>
+          <text x="80" y="64" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">Q1</text>
+
+          <circle cx="204" cy="40" r="20" fill="#881337" stroke="#f43f5e" stroke-width="2"/>
+          <text x="204" y="44" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">LLM</text>
+
+          <circle cx="330" cy="70" r="16" fill="#4c0519" stroke="#f43f5e" stroke-width="2"/>
+          <text x="330" y="74" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">REF</text>
+
+          <circle cx="140" cy="130" r="14" fill="#3b0716" stroke="#fb7185" stroke-width="1.5"/>
+          <circle cx="250" cy="140" r="18" fill="#4c0519" stroke="#f43f5e" stroke-width="2"/>
+          <text x="250" y="144" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">PROOF</text>
+        </g>
+
+        <!-- Citation preview box -->
+        <rect x="20" y="170" width="368" height="52" rx="8" fill="#240815" stroke="#4c0519" stroke-width="1"/>
+        <text x="36" y="192" font-family="monospace" font-size="11" fill="#f43f5e">cite[arXiv:2409.1284] · Verified Confidence 99.4%</text>
+        <text x="36" y="210" font-family="system-ui, sans-serif" font-size="11" fill="#94a3b8">Cross-referenced with 4 peer-reviewed journals</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Title Overlay -->
+  <text x="60" y="770" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="28" fill="#ffffff" letter-spacing="-0.02em">ZYR0 Research</text>
+  <text x="60" y="805" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="16" fill="#94a3b8">Autonomous literature agent with verified citations</text>
+  <rect x="60" y="830" width="136" height="28" rx="14" fill="#f43f5e" fill-opacity="0.15" stroke="#f43f5e" stroke-opacity="0.4"/>
+  <text x="128" y="849" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#f43f5e" text-anchor="middle" letter-spacing="0.05em">DEEP AI AGENT</text>
+</svg>
