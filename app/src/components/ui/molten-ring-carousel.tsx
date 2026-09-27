@@ -40,14 +40,14 @@ export interface MoltenRingItem {
 
 export interface MoltenRingCarouselProps extends Omit<
   React.ComponentPropsWithoutRef<"section">,
-  "children"
+  "children" | "onSelect"
 > {
   items: MoltenRingItem[];
   /** Wordmark in the top-left. Omit to drop it. @default undefined */
   brand?: string;
-  /** Ring radius, in stage widths. Larger flattens the arc. @default 1 */
+  /** Ring radius, in stage widths. Larger flattens the arc. @default 1.35 */
   arc?: number;
-  /** Card long edge, as a fraction of the stage width. @default 0.265 */
+  /** Card long edge, as a fraction of the stage width. @default 0.58 */
   cardSize?: number;
   /** Card long edge / short edge. Art is cover-fitted into it. @default 1.5 */
   cardRatio?: number;
@@ -59,6 +59,16 @@ export interface MoltenRingCarouselProps extends Omit<
   glass?: boolean;
   /** Optional callback when an item is selected */
   onSelect?: (item: MoltenRingItem, index: number) => void;
+  /** Controlled rotation index / progress from page scroll */
+  controlledIndex?: number;
+  /** When true, wheel events are not intercepted with preventDefault() */
+  scrollControlled?: boolean;
+  /** Callback whenever the active card index changes */
+  onActiveChange?: (index: number) => void;
+  /** Explicit trigger for entry animation @default undefined */
+  activeInView?: boolean;
+  /** Show built-in side captions @default true */
+  showFlanks?: boolean;
   /** Extra classes on the root surface. @default undefined */
   className?: string;
 }
@@ -70,60 +80,56 @@ const MAX_STRANDS = 24;
 
 /* Every figure below is expressed as a multiple of the card's long edge, so
    proportions survive any viewport instead of being tuned to one screen. */
-const FUSE = 0.087; // resting blend between neighbours
-const CORNER = 0.015;
-const CROSSFADE = 0.035; // over which neighbouring art crossfades inside the goo
-const SPACING = 1.55; // centre to centre along the arc, in short edges
+const FUSE = 0.016; // minimal resting blend: cards stay distinct and readable, not sticky goo
+const CORNER = 0.02;
+const CROSSFADE = 0.02;
+const SPACING = 1.95; // generous arc spacing so cards don't clump or crowd each other
 
-/* Cursor. It contributes nothing to the picture; it only alters how the field
-   responds nearby. Take-up and let-go run at different rates on purpose - a
-   card tips toward the cursor briskly and returns at half the speed. */
-const CURSOR_FUSE = 0.085; // blend added to the field at the cursor
-const CURSOR_REACH = 0.65;
-const PULL = 0.065; // how far a card leans toward the cursor
-const SWELL = 0.09;
-const REACH = 1.7; // radius of cursor influence, in card long edges
-const GRAB = 0.14;
-const RELEASE = 0.06;
-const NEIGHBOUR_PUSH = 0.042; // how far the hovered card's neighbours get out of the way
-const NEIGHBOUR_SCALE = 0.035;
-const NEIGHBOUR_DIM = 0.15;
-const NEIGHBOUR_REACH = 2.4;
-const WAVE = 0.01; // capillary wake off a moving cursor
-const WAVE_FREQ = 20;
-const WAVE_SPEED = 7;
+/* Cursor. Subtle tilt and swell, keeping the card rock-solid centered when not hovered. */
+const CURSOR_FUSE = 0.014;
+const CURSOR_REACH = 0.45;
+const PULL = 0.016; // subtle responsive tilt towards cursor
+const SWELL = 0.04;
+const REACH = 0.7; // only reacts when cursor is near the card
+const GRAB = 0.12;
+const RELEASE = 0.05;
+const NEIGHBOUR_PUSH = 0.012; // minimal neighbor push to prevent jarring shifts
+const NEIGHBOUR_SCALE = 0.015;
+const NEIGHBOUR_DIM = 0.12;
+const NEIGHBOUR_REACH = 1.8;
+const WAVE = 0.005;
+const WAVE_FREQ = 16;
+const WAVE_SPEED = 5;
 
-/* Strands. Thickest where one leaves a card, waisted at the midpoint, and
-   hanging lower the further it is drawn out. */
-const STRAND = 0.2; // end thickness, relative to the edge it grows from
-const STRAND_SNAP = 1.15; // gaps wider than this, in short edges, have snapped
-const WAIST = 0.35;
-const SAG = 0.015;
-const WELD = 0.035;
+/* Strands. Delicate thin liquid threads instead of heavy sticky bridges. */
+const STRAND = 0.07;
+const STRAND_SNAP = 1.15;
+const WAIST = 0.22;
+const SAG = 0.01;
+const WELD = 0.02;
 
 /* Optical band running across the upper and lower borders. */
-const BAND = 0.08; // fraction of the stage height
-const REFRACT = 0.15;
-const SQUEEZE = 0.05;
-const RIPPLE = 0.0125;
+const BAND = 0.06;
+const REFRACT = 0.12;
+const SQUEEZE = 0.04;
+const RIPPLE = 0.01;
 const RIPPLE_FREQ = 8;
-const FRINGE = 0.004;
-const SHEEN = 0.05;
+const FRINGE = 0.003;
+const SHEEN = 0.04;
 
-const WOBBLE = 0.0075; // surface tension noise while the ring is moving
+const WOBBLE = 0.004;
 
-/* Turn. The ring eases after a target and settles with a card facing front. */
-const WHEEL = 0.0022; // slots per px of wheel delta
-const DRAG = 0.007; // ... and per px dragged
+/* Turn. */
+const WHEEL = 0.0022;
+const DRAG = 0.007;
 const EASE = 0.08;
 const SNAP_IDLE = 260;
 const SNAP_EASE = 0.06;
 const CLICK_SLOP = 6;
 const CLICK_MS = 700;
 
-/* Arrival. The deck begins fused into a single mass at the front and the
-   circle draws it apart into slots, which is what produces the strands. */
-const ENTRY_MS = 2600;
+/* Arrival. Blooms outward from a single central droplet/dot when entering view. */
+const ENTRY_MS = 1800;
 
 const THEME_EVERY = 20;
 
@@ -157,9 +163,7 @@ uniform float uCorner;
 uniform float uCount;
 uniform vec2  uCentre[MAX_CARDS];   // centre in px, origin at the stage centre
 uniform float uAngle[MAX_CARDS];   // radians
-// xy = per-axis scale, z = brightness, w = atlas cell index. Packed together
-// because a uniform-array slot is a full vec4 register regardless of the
-// declared type, so zw are free once xy are spent.
+// xy = per-axis scale, z = brightness, w = atlas cell index.
 uniform vec4  uCardState[MAX_CARDS];
 
 uniform float uStrandCount;
@@ -189,9 +193,6 @@ vec2 atlasUV(vec2 uv, float idx) {
   return (vec2(mod(idx, uGrid.x), floor(idx / uGrid.x)) + uv) / uGrid;
 }
 
-/* Bilinear value noise. The perturbation is small and rides on a surface
-   already in motion, so a simplex implementation would cost twenty more lines
-   for a difference nobody could pick out. */
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
@@ -208,13 +209,6 @@ float sdRoundBox(vec2 p, vec2 b, float r) {
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 
-/* One strand spanning two cards: a slab laid centre to centre, as thick at
-   each end as the edge it grows from, waisted at the midpoint and hanging under
-   its own weight.
-
-   Swept as a box, not a capsule. A capsule's circular cross-section would
-   balloon past the cards' own flat faces once they fused; a box tucks inside
-   them, so a merged pair keeps the outline of a single card. */
 float sdStrand(vec2 p, vec2 a, vec2 b, float rEnd, float rMid, float sag) {
   vec2 ba = b - a;
   float len = length(ba);
@@ -227,37 +221,27 @@ float sdStrand(vec2 p, vec2 a, vec2 b, float rEnd, float rMid, float sag) {
   float across = dot(q, nrm);
 
   float h = clamp(along / len + 0.5, 0.0, 1.0);
-  float bell = sin(3.14159265 * h);        // peaks mid-span, vanishes at both ends
-  across += sag * bell * nrm.y;            // hang, projected onto the perpendicular
+  float bell = sin(3.14159265 * h);
+  across += sag * bell * nrm.y;
   float r = mix(rMid, rEnd, pow(1.0 - bell, 1.7));
 
-  // Square ends, which finish inside the cards and are never on screen.
   return max(abs(along) - len * 0.5, abs(across) - r);
 }
 
-/* Smooth minimum - the one operator the whole look rests on. Against the 1e6
-   sentinel it degrades cleanly to an ordinary min(). */
 float smin(float a, float b, float k) {
   if (k <= 0.0001) return min(a, b);
   float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
   return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-/* The upper and lower margins behave like the ground edge of a thick pane.
-   Since the whole scene is evaluated from p, displacing p at this point bends
-   cards and strands together in one pass - no extra target, no second warp. */
 float lipWarp(inout vec2 p) {
   if (uLipDepth <= 0.5) return 0.0;
   float dy = abs(p.y) - (uResolution.y * 0.5 - uLipDepth);
   if (dy <= 0.0) return 0.0;
 
   float t = clamp(dy / uLipDepth, 0.0, 1.0);
-  // A circular falloff: almost flat where the band begins and dropping away
-  // steeply at the boundary, which is what sells depth over a plain gradient.
   float bend = 1.0 - sqrt(max(0.0, 1.0 - t * t));
 
-  // Sampling from deeper inside displaces detail toward the margin, so the
-  // image elongates into the band and grows as it nears the boundary.
   p.y -= sign(p.y) * bend * (uLip.x + sin(p.x * uLip.w) * uLip.z);
   p.x *= 1.0 - bend * uLip.y;
   return bend;
@@ -267,14 +251,8 @@ void main() {
   vec2 p = (vUv - 0.5) * uResolution;
   float bend = lipWarp(p);
 
-  // Measured after the displacement so the cursor lives in the same warped
-  // space the cards do - carried into the band, its influence bends along with
-  // them instead of lying flat across the top.
   float toCursor = length(p - uCursor.xy);
 
-  // Fusion radius rises within a pool centred on the pointer, slackening the
-  // field just where contact occurs while it stays taut elsewhere. Computed once
-  // per pixel rather than per card, costing a single length() for the loop.
   float k = uFuse;
   if (uCursor.z > 0.001) {
     float t = 1.0 - smoothstep(0.0, max(uWake.x, 1.0), toCursor);
@@ -283,9 +261,6 @@ void main() {
 
   float d = 1e6;
 
-  // The nearest two cards, carried alongside the distance so colour resolves in
-  // the same loop rather than a second one. Where the field bridges a pair both
-  // register as close, which is precisely where the crossfade should sit.
   float d0 = 1e6, d1 = 1e6;
   vec2 uv0 = vec2(0.5), uv1 = vec2(0.5);
   float im0 = 0.0, im1 = 0.0;
@@ -301,11 +276,6 @@ void main() {
     if (grown <= 0.0001) continue;
 
     vec2 q = p - uCentre[i];
-    // Beyond this radius a card cannot reach the surface, so it is rejected
-    // before any transcendentals run - which is what makes two dozen of them
-    // affordable. Sized off the card itself, since one swollen beneath the
-    // cursor covers more ground than its resting footprint, as does the wider
-    // fusion radius around it.
     float cull = halfSpan * grown + k + uJitter + 8.0;
     if (dot(q, q) > cull * cull) continue;
 
@@ -313,16 +283,12 @@ void main() {
     q = vec2(q.x * ca + q.y * sa, -q.x * sa + q.y * ca);
 
     vec2 halfSize = max(uSize * 0.5 * st.xy, vec2(0.0001));
-    // Opens as a lozenge and settles into the rounded rectangle as it grows, so
-    // arrival reads as a droplet finding its form, not a box being scaled.
     float rMax = min(halfSize.x, halfSize.y);
     float r = min(rMax, mix(rMax, uCorner, smoothstep(0.30, 1.0, min(st.x, st.y))));
 
     float di = sdRoundBox(q, halfSize, r);
     d = smin(d, di, k);
 
-    // Clamped so that fused area beyond a card's own bounds takes that card's
-    // edge pixels instead of tiling or spilling into the adjacent atlas cell.
     vec2 luv = clamp(q / (2.0 * halfSize) + 0.5, 0.004, 0.996);
     luv.y = 1.0 - luv.y;
 
@@ -337,9 +303,6 @@ void main() {
   for (int i = 0; i < MAX_STRANDS; i++) {
     if (float(i) >= uStrandCount) break;
     vec4 par = uStrandPar[i];
-    // Negative radii are allowed, and wanted: they raise the strand's field
-    // above the surface so it withdraws smoothly instead of stalling at zero
-    // and leaving a half-resolved hairline behind.
     if (par.x <= -3.0) continue;
     vec2 a = uStrandA[i], b = uStrandB[i];
     vec2 mid = (a + b) * 0.5;
@@ -348,37 +311,23 @@ void main() {
     d = smin(d, sdStrand(p, a, b, par.x, par.y, par.z), par.w);
   }
 
-  // Surface tension, scaled to nothing at rest so a settled ring is perfectly
-  // smooth.
   if (uJitter > 0.001) {
     d += noise(p * 0.012 + vec2(uTime * 0.22, uTime * -0.17)) * uJitter;
   }
 
-  // A wake trailing the cursor, expanding outward and decaying over the same
-  // radius the slackening uses, so a quick pass leaves a disturbance that
-  // persists a moment after the gesture ends.
   if (uWake.y > 0.001) {
     d += sin(toCursor * uWake.z - uTime * uWake.w)
        * uWake.y * exp(-toCursor / max(uWake.x, 1.0));
   }
 
-  // Bounded at both ends rather than only below. The rejection test above puts
-  // a discontinuity in the field, and fwidth measured across it would return a
-  // huge derivative, tracing a translucent seam along every rejection boundary.
   float aa = clamp(fwidth(d), 0.5, 2.0);
   float alpha = 1.0 - smoothstep(-aa, aa, d);
   if (alpha <= 0.001) discard;
 
-  // Equal weight where the two nearest cards tie, settling on whichever leads
-  // once the margin exceeds the crossfade width. Artwork and brightness both
-  // ride this weight, so neither can leave a visible join through fused area.
   float nearest = smoothstep(-uCrossfade, uCrossfade, d1 - d0);
 
   vec3 col = uColor;
   if (uHasArt > 0.5) {
-    // Branch on a uniform, keeping derivatives well defined across the quad.
-    // The offset scales with band depth, so outside it all three taps collapse
-    // onto one texel.
     vec2 fr = vec2(uFringe * bend, 0.0);
     vec3 c0 = vec3(
       texture(uAtlas, atlasUV(uv0 + fr, im0)).r,
@@ -393,12 +342,7 @@ void main() {
     col = mix(c1, c0, nearest);
   }
 
-  // Every card except the selected one is attenuated, leaving that card the
-  // only fully lit surface in the frame.
   col *= mix(dm1, dm0, nearest);
-
-  // A little brightening where the band is steepest, so it reads as a surface
-  // taking light and not purely as a distortion.
   col += bend * uSheen;
 
   fragColor = vec4(col, alpha);
@@ -431,8 +375,6 @@ function build(gl: WebGL2RenderingContext, vert: string, frag: string) {
   return program;
 }
 
-/** Cached uniform handles. getUniformLocation performs a string lookup on every
-    call, and this sits inside the per-frame path. */
 function uniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
   const cache = new Map<string, WebGLUniformLocation | null>();
   return (name: string) => {
@@ -445,8 +387,6 @@ function uniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
   };
 }
 
-/** Resolves any CSS colour to 0-1 RGB by asking the browser instead of parsing
-    it. */
 function colorReader() {
   const probe = document.createElement("canvas");
   probe.width = probe.height = 1;
@@ -461,7 +401,7 @@ function colorReader() {
   };
 }
 
-/** A single sheet, each cell cover-fitted. */
+/** A single sheet, each cell cover-fitted at crisp 1024px cell resolution. */
 function packAtlas(
   images: HTMLImageElement[],
   cols: number,
@@ -498,13 +438,18 @@ function packAtlas(
 export function MoltenRingCarousel({
   items,
   brand,
-  arc = 1,
-  cardSize = 0.265,
+  arc = 1.35,
+  cardSize = 0.58,
   cardRatio = 1.5,
   fuse = FUSE,
   threads = true,
   glass = true,
   onSelect,
+  controlledIndex,
+  scrollControlled = false,
+  onActiveChange,
+  activeInView,
+  showFlanks = true,
   className,
   ...props
 }: MoltenRingCarouselProps) {
@@ -522,19 +467,23 @@ export function MoltenRingCarousel({
     threads,
     glass,
   });
-  settings.current = { arc, cardSize, cardRatio, fuse, threads, glass };
-
   const onSelectRef = React.useRef(onSelect);
-  onSelectRef.current = onSelect;
-
+  const onActiveChangeRef = React.useRef(onActiveChange);
+  const activeInViewRef = React.useRef(activeInView);
+  const controlledRef = React.useRef(controlledIndex);
   const navigateRef = React.useRef(navigate);
-  navigateRef.current = navigate;
-
   const itemsRef = React.useRef(items);
-  itemsRef.current = items;
 
-  /** Populated by the render loop so keyboard input drives the same rotation the
-    wheel does. */
+  React.useEffect(() => {
+    settings.current = { arc, cardSize, cardRatio, fuse, threads, glass };
+    onSelectRef.current = onSelect;
+    onActiveChangeRef.current = onActiveChange;
+    activeInViewRef.current = activeInView;
+    controlledRef.current = controlledIndex;
+    navigateRef.current = navigate;
+    itemsRef.current = items;
+  });
+
   const step = React.useRef<(by: number) => void>(() => {});
 
   const count = Math.min(items.length, MAX_CARDS);
@@ -579,9 +528,9 @@ export function MoltenRingCarousel({
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-    // --- art --------------------------------------------------------------
-    const COLS = Math.min(4, count);
-    const CELL = 512;
+    // --- art (High-Res 1024px cells for Retina Display) -------------------
+    const COLS = Math.min(3, count);
+    const CELL = 1024;
     let atlas: WebGLTexture | null = null;
     let loaded = 0;
     const images = items.slice(0, count).map((item) => {
@@ -615,10 +564,12 @@ export function MoltenRingCarousel({
     });
 
     // --- state ------------------------------------------------------------
+    const FRONT = Math.floor(count / 2);
+    // Start with card 0 in the front slot
     let width = 0;
     let height = 0;
-    let progress = 0;
-    let goal = 0;
+    let progress = -FRONT;
+    let goal = -FRONT;
     let lastInput = 0;
     let snapped = true;
     let hovered = -1;
@@ -651,7 +602,6 @@ export function MoltenRingCarousel({
       angle: 0,
       scale: 1,
     }));
-    const FRONT = Math.floor(count / 2);
 
     const resize = () => {
       const w = canvas.clientWidth;
@@ -663,19 +613,30 @@ export function MoltenRingCarousel({
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
     };
-    resize();
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
+    let hasEntered = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          hasEntered = true;
+        }
+      },
+      { threshold: 0.1 }
+    );
+    io.observe(canvas);
+
     // --- input ------------------------------------------------------------
     const onWheel = (event: WheelEvent) => {
+      if (scrollControlled) return; // Allow natural page scroll to drive the carousel
       event.preventDefault();
       tween = null;
       goal += event.deltaY * WHEEL;
       lastInput = performance.now();
       snapped = false;
     };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("wheel", onWheel, { passive: scrollControlled });
 
     step.current = (by: number) => {
       tween = { from: goal, to: Math.round(goal) + by, at: performance.now() };
@@ -712,10 +673,8 @@ export function MoltenRingCarousel({
       dragFrom = null;
       if (!wasClick || hovered < 0) return;
 
-      // Current active index in the front position
-      const activeIdx = (((Math.round(goal) + FRONT) % count) + count) % count;
+      const activeIdx = (((Math.round(progress) + FRONT) % count) + count) % count;
 
-      // If the user clicked the card that's already in the front position, open/navigate!
       if (hovered === activeIdx) {
         const targetItem = itemsRef.current[hovered];
         if (targetItem) {
@@ -735,8 +694,8 @@ export function MoltenRingCarousel({
         return;
       }
 
-      // Rotate to the front slot, taking whichever direction is shorter.
-      const want = (((hovered - FRONT) % count) + count) % count;
+      // Rotate to front slot
+      const want = hovered - FRONT;
       tween = {
         from: goal,
         to: want + Math.round((goal - want) / count) * count,
@@ -768,12 +727,16 @@ export function MoltenRingCarousel({
       if (ticks++ % THEME_EVERY === 0)
         ink = readColor(getComputedStyle(canvas).color);
 
-      if (atlas)
+      const shouldBloom = atlas && (hasEntered || activeInViewRef.current);
+      if (shouldBloom)
         entry = reduced ? 1 : Math.min(1, entry + (dt * 1000) / ENTRY_MS);
       const spread = inOutCubic(entry);
 
       // --- turn -----------------------------------------------------------
-      if (tween) {
+      if (controlledRef.current !== undefined) {
+        goal = -FRONT + controlledRef.current;
+        tween = null;
+      } else if (tween) {
         const t = clamp((now - tween.at) / CLICK_MS, 0, 1);
         goal = tween.from + (tween.to - tween.from) * outCubic(t);
         if (t >= 1) tween = null;
@@ -781,15 +744,25 @@ export function MoltenRingCarousel({
         goal = Math.round(goal);
         snapped = true;
       }
+
       progress +=
-        (goal - progress) * (reduced ? 1 : snapped ? SNAP_EASE : EASE);
+        (goal - progress) * (reduced ? 1 : controlledRef.current !== undefined ? 0.12 : snapped ? SNAP_EASE : EASE);
       const speed = Math.abs(goal - progress);
 
-      const near = (((Math.round(goal) + FRONT) % count) + count) % count;
-      setActive((prev) => (prev === near ? prev : near));
+      const near = (((Math.round(progress) + FRONT) % count) + count) % count;
+      setActive((prev) => {
+        if (prev !== near) {
+          onActiveChangeRef.current?.(near);
+          return near;
+        }
+        return prev;
+      });
 
-      // --- geometry --------------------------------------------------------
-      const long = width * config.cardSize;
+      // --- geometry: HEROIC CENTERPIECE SCALE -----------------------------
+      // Up to ~58% of viewport width and ~70% of viewport height (widescreen 1.5:1 ratio)
+      const maxLongByHeight = height * 0.70 * config.cardRatio;
+      const maxLongByWidth = width * (width < 768 ? 0.90 : config.cardSize);
+      const long = Math.min(maxLongByWidth, maxLongByHeight);
       const short = long / config.cardRatio;
       const radius = width * config.arc;
       const angleStep = (short * SPACING) / radius;
@@ -862,7 +835,7 @@ export function MoltenRingCarousel({
 
         at[i].x += leanX[i];
         at[i].y += leanY[i] + push;
-        at[i].scale = (0.18 + 0.82 * spread) * (1 + swell[i]);
+        at[i].scale = (0.01 + 0.99 * spread) * (1 + swell[i]);
 
         pos[i * 2] = at[i].x;
         pos[i * 2 + 1] = at[i].y;
@@ -957,6 +930,7 @@ export function MoltenRingCarousel({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      io.disconnect();
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
@@ -969,7 +943,7 @@ export function MoltenRingCarousel({
       gl.deleteVertexArray(quad);
       gl.deleteProgram(program);
     };
-  }, [sources, count, reduced]);
+  }, [sources, count, reduced, scrollControlled, items]);
 
   const item = items[active];
 
@@ -980,18 +954,18 @@ export function MoltenRingCarousel({
         aria-roledescription="carousel"
         aria-label={brand ?? "Gallery"}
         className={cn(
-          "bg-background text-foreground relative h-full min-h-[24rem] w-full",
+          "bg-background text-foreground relative h-full min-h-[28rem] w-full",
           className,
         )}
         {...props}
       >
-        <ul className="flex h-full snap-y snap-mandatory flex-col items-center gap-4 overflow-y-auto py-8 px-4">
+        <ul className="flex h-full snap-y snap-mandatory flex-col items-center gap-6 overflow-y-auto py-8 px-4">
           {items.map((entry) => (
-            <li key={entry.image} className="w-full max-w-sm shrink-0 snap-center">
+            <li key={entry.image} className="w-full max-w-xl shrink-0 snap-center">
               {entry.href ? (
                 <Link
                   to={entry.href}
-                  className="block group rounded-2xl overflow-hidden border border-border bg-card p-4 transition-all hover:border-primary/50"
+                  className="block group rounded-2xl overflow-hidden border border-border bg-card p-4 transition-all hover:border-primary/50 shadow-lg"
                 >
                   <img
                     src={entry.image}
@@ -1001,12 +975,12 @@ export function MoltenRingCarousel({
                   />
                   <div className="mt-3 flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-foreground">{entry.title}</h4>
+                      <h4 className="font-semibold text-foreground text-lg">{entry.title}</h4>
                       {entry.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{entry.description}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{entry.description}</p>
                       )}
                     </div>
-                    <ArrowUpRight className="w-4 h-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <ArrowUpRight className="w-5 h-5 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </Link>
               ) : (
@@ -1018,9 +992,9 @@ export function MoltenRingCarousel({
                     style={{ aspectRatio: cardRatio }}
                   />
                   <div className="mt-3">
-                    <h4 className="font-semibold text-foreground">{entry.title}</h4>
+                    <h4 className="font-semibold text-foreground text-lg">{entry.title}</h4>
                     {entry.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{entry.description}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{entry.description}</p>
                     )}
                   </div>
                 </div>
@@ -1037,7 +1011,7 @@ export function MoltenRingCarousel({
       aria-roledescription="carousel"
       aria-label={brand ?? "Gallery"}
       className={cn(
-        "bg-background text-foreground relative h-full min-h-[26rem] w-full overflow-hidden select-none",
+        "bg-background text-foreground relative h-full min-h-[30rem] w-full overflow-hidden select-none",
         className,
       )}
       {...props}
@@ -1075,74 +1049,66 @@ export function MoltenRingCarousel({
         ))}
       </ul>
 
-      {/* Top Left Brand / Tagline */}
+      {/* Optional Top Left Brand / Tagline */}
       {brand ? (
-        <div className="pointer-events-none absolute top-6 left-6 md:left-8 z-10 flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold tracking-wider uppercase text-foreground/80">
+        <div className="pointer-events-none absolute top-6 left-6 md:left-10 z-10 flex items-center gap-2">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+          <span className="text-xs font-semibold tracking-wider uppercase text-foreground/80 font-mono">
             {brand}
           </span>
         </div>
       ) : null}
 
-      {/* Top Right Quick Hint */}
-      <div className="pointer-events-none absolute top-6 right-6 md:right-8 z-10 hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground/75 font-mono">
-        <span>Scroll / drag to spin</span>
-        <span className="px-1.5 py-0.5 rounded border border-border/80 text-[10px] bg-background/50">↑↓</span>
-      </div>
+      {/* Flanks (Only rendered if showFlanks is true) */}
+      {showFlanks ? (
+        <>
+          <div className="absolute top-1/2 left-6 md:left-12 -translate-y-1/2 z-10 max-w-[260px] sm:max-w-[320px] pointer-events-none">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-muted-foreground text-xs font-mono tabular-nums px-2 py-0.5 rounded-full border border-border/70 bg-surface/70">
+                {String(active + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
+              </span>
+              {item?.badge && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full border border-primary/30 text-primary bg-primary/10 uppercase tracking-widest font-mono font-semibold">
+                  {item.badge}
+                </span>
+              )}
+            </div>
 
-      {/* Left Flank Plate Caption: Index, Title, Casual Tagline, and Interactive Link */}
-      <div className="absolute top-1/2 left-6 md:left-10 -translate-y-1/2 z-10 max-w-[240px] sm:max-w-[280px]">
-        <div className="flex items-center gap-2 mb-1.5 pointer-events-none">
-          <span className="text-muted-foreground text-xs font-mono tabular-nums">
-            {String(active + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
-          </span>
-          {item?.badge && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full border border-border/70 text-muted-foreground bg-surface/50 uppercase tracking-widest font-mono">
-              {item.badge}
-            </span>
-          )}
-        </div>
+            <h3 className="text-2xl sm:text-4xl font-display font-bold tracking-tight text-foreground drop-shadow-md">
+              {item?.title}
+            </h3>
 
-        <h3 className="text-2xl sm:text-3xl font-display font-medium tracking-tight text-foreground pointer-events-none transition-all duration-200">
-          {item?.title}
-        </h3>
+            {item?.description && (
+              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">
+                {item.description}
+              </p>
+            )}
 
-        {item?.description && (
-          <p className="mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground pointer-events-none transition-opacity duration-200">
-            {item.description}
-          </p>
-        )}
-
-        {item?.href && (
-          <div className="mt-4 pointer-events-auto">
-            <Link
-              to={item.href}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-foreground bg-foreground/5 hover:bg-foreground/10 border border-border/80 hover:border-foreground/30 transition-all group backdrop-blur-sm"
-            >
-              <span>Check it out</span>
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-primary" />
-            </Link>
+            {item?.href && (
+              <div className="mt-4 pointer-events-auto">
+                <Link
+                  to={item.href}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-foreground bg-surface/80 hover:bg-surface border border-border/80 hover:border-primary/50 shadow-md transition-all group backdrop-blur-md"
+                >
+                  <span>Check it out</span>
+                  <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-primary" />
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Right Flank Plate Caption: Metadata & Context */}
-      {item?.meta ? (
-        <div className="pointer-events-none absolute top-1/2 right-6 md:right-10 -translate-y-1/2 text-right z-10 hidden sm:block max-w-[180px]">
-          <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/60 mb-1">
-            Focus &amp; Tier
-          </div>
-          <div className="text-muted-foreground text-xs sm:text-sm font-medium">
-            {item.meta}
-          </div>
-        </div>
+          {item?.meta ? (
+            <div className="pointer-events-none absolute top-1/2 right-6 md:right-12 -translate-y-1/2 text-right z-10 hidden sm:block max-w-[200px]">
+              <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/70 mb-1">
+                Tier &amp; Status
+              </div>
+              <div className="text-foreground text-xs sm:text-sm font-semibold">
+                {item.meta}
+              </div>
+            </div>
+          ) : null}
+        </>
       ) : null}
-
-      {/* Bottom Hint on mobile */}
-      <div className="pointer-events-none absolute bottom-4 inset-x-0 text-center sm:hidden text-[10px] text-muted-foreground/60 font-mono">
-        Swipe cards to spin
-      </div>
     </section>
   );
 }
