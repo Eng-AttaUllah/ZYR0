@@ -18,8 +18,6 @@
 // nearby cards toward it, elbows their neighbours aside, and draws strands out
 // between them.
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -30,24 +28,18 @@ export interface MoltenRingItem {
   title: string;
   /** The line to the right of the ring - discipline, year, whatever. */
   meta?: string;
-  /** Casual short description / tagline */
-  description?: string;
-  /** Destination route or external URL */
-  href?: string;
-  /** Optional badge */
-  badge?: string;
 }
 
 export interface MoltenRingCarouselProps extends Omit<
   React.ComponentPropsWithoutRef<"section">,
-  "children" | "onSelect"
+  "children"
 > {
   items: MoltenRingItem[];
   /** Wordmark in the top-left. Omit to drop it. @default undefined */
   brand?: string;
-  /** Ring radius, in stage widths. Larger flattens the arc. @default 1.35 */
+  /** Ring radius, in stage widths. Larger flattens the arc. @default 1 */
   arc?: number;
-  /** Card long edge, as a fraction of the stage width. @default 0.58 */
+  /** Card long edge, as a fraction of the stage width. @default 0.265 */
   cardSize?: number;
   /** Card long edge / short edge. Art is cover-fitted into it. @default 1.5 */
   cardRatio?: number;
@@ -57,20 +49,14 @@ export interface MoltenRingCarouselProps extends Omit<
   threads?: boolean;
   /** Optical band that bends the image at the upper and lower borders. @default true */
   glass?: boolean;
-  /** Optional callback when an item is selected */
-  onSelect?: (item: MoltenRingItem, index: number) => void;
-  /** Controlled rotation index / progress from page scroll */
-  controlledIndex?: number;
-  /** When true, wheel events are not intercepted with preventDefault() */
-  scrollControlled?: boolean;
-  /** Callback whenever the active card index changes */
-  onActiveChange?: (index: number) => void;
-  /** Explicit trigger for entry animation @default undefined */
-  activeInView?: boolean;
-  /** Show built-in side captions @default true */
-  showFlanks?: boolean;
   /** Extra classes on the root surface. @default undefined */
   className?: string;
+  /** Rotation handed in from outside, in card slots (0 = first card front).
+      Omit to let the wheel and drag drive the ring. */
+  controlledIndex?: number;
+  /** When true the wheel is left alone so the page can scroll, and the ring
+      follows `controlledIndex` instead. @default false */
+  scrollControlled?: boolean;
 }
 
 /** Each uniform-array element occupies a vec4 register; WebGL2 guarantees only
@@ -80,56 +66,63 @@ const MAX_STRANDS = 24;
 
 /* Every figure below is expressed as a multiple of the card's long edge, so
    proportions survive any viewport instead of being tuned to one screen. */
-const FUSE = 0.016; // minimal resting blend: cards stay distinct and readable, not sticky goo
-const CORNER = 0.02;
-const CROSSFADE = 0.02;
-const SPACING = 1.95; // generous arc spacing so cards don't clump or crowd each other
+const FUSE = 0.087; // resting blend between neighbours
+const CORNER = 0.015;
+const CROSSFADE = 0.035; // over which neighbouring art crossfades inside the goo
+const SPACING = 1.55; // centre to centre along the arc, in short edges
 
-/* Cursor. Subtle tilt and swell, keeping the card rock-solid centered when not hovered. */
-const CURSOR_FUSE = 0.014;
-const CURSOR_REACH = 0.45;
-const PULL = 0.016; // subtle responsive tilt towards cursor
-const SWELL = 0.04;
-const REACH = 0.7; // only reacts when cursor is near the card
-const GRAB = 0.12;
-const RELEASE = 0.05;
-const NEIGHBOUR_PUSH = 0.012; // minimal neighbor push to prevent jarring shifts
-const NEIGHBOUR_SCALE = 0.015;
-const NEIGHBOUR_DIM = 0.12;
-const NEIGHBOUR_REACH = 1.8;
-const WAVE = 0.005;
-const WAVE_FREQ = 16;
-const WAVE_SPEED = 5;
+/* Cursor. It contributes nothing to the picture; it only alters how the field
+   responds nearby. Take-up and let-go run at different rates on purpose - a
+   card tips toward the cursor briskly and returns at half the speed. */
+const CURSOR_FUSE = 0.085; // blend added to the field at the cursor
+const CURSOR_REACH = 0.65;
+const PULL = 0.065; // how far a card leans toward the cursor
+const SWELL = 0.09;
+const REACH = 1.7; // radius of cursor influence, in card long edges
+const GRAB = 0.14;
+const RELEASE = 0.06;
+const NEIGHBOUR_PUSH = 0.042; // how far the hovered card's neighbours get out of the way
+const NEIGHBOUR_SCALE = 0.035;
+const NEIGHBOUR_DIM = 0.15;
+const NEIGHBOUR_REACH = 2.4;
+const WAVE = 0.01; // capillary wake off a moving cursor
+const WAVE_FREQ = 20;
+const WAVE_SPEED = 7;
 
-/* Strands. Delicate thin liquid threads instead of heavy sticky bridges. */
-const STRAND = 0.07;
-const STRAND_SNAP = 1.15;
-const WAIST = 0.22;
-const SAG = 0.01;
-const WELD = 0.02;
+/* Strands. Thickest where one leaves a card, waisted at the midpoint, and
+   hanging lower the further it is drawn out. */
+const STRAND = 0.2; // end thickness, relative to the edge it grows from
+const STRAND_SNAP = 1.15; // gaps wider than this, in short edges, have snapped
+const WAIST = 0.35;
+const SAG = 0.015;
+const WELD = 0.035;
 
 /* Optical band running across the upper and lower borders. */
-const BAND = 0.06;
-const REFRACT = 0.12;
-const SQUEEZE = 0.04;
-const RIPPLE = 0.01;
+const BAND = 0.08; // fraction of the stage height
+const REFRACT = 0.15;
+const SQUEEZE = 0.05;
+const RIPPLE = 0.0125;
 const RIPPLE_FREQ = 8;
-const FRINGE = 0.003;
-const SHEEN = 0.04;
+const FRINGE = 0.004;
+const SHEEN = 0.05;
 
-const WOBBLE = 0.004;
+const WOBBLE = 0.0075; // surface tension noise while the ring is moving
 
-/* Turn. */
-const WHEEL = 0.0022;
-const DRAG = 0.007;
+/* Turn. The ring eases after a target and settles with a card facing front. */
+const WHEEL = 0.0022; // slots per px of wheel delta
+const DRAG = 0.007; // ... and per px dragged
 const EASE = 0.08;
 const SNAP_IDLE = 260;
 const SNAP_EASE = 0.06;
+/** Tracking a value handed in from outside wants a firmer hand than idle
+    snapping - close enough to follow the page, still eased enough not to jerk. */
+const CONTROLLED_EASE = 0.12;
 const CLICK_SLOP = 6;
 const CLICK_MS = 700;
 
-/* Arrival. Blooms outward from a single central droplet/dot when entering view. */
-const ENTRY_MS = 1800;
+/* Arrival. The deck begins fused into a single mass at the front and the
+   circle draws it apart into slots, which is what produces the strands. */
+const ENTRY_MS = 2600;
 
 const THEME_EVERY = 20;
 
@@ -163,7 +156,9 @@ uniform float uCorner;
 uniform float uCount;
 uniform vec2  uCentre[MAX_CARDS];   // centre in px, origin at the stage centre
 uniform float uAngle[MAX_CARDS];   // radians
-// xy = per-axis scale, z = brightness, w = atlas cell index.
+// xy = per-axis scale, z = brightness, w = atlas cell index. Packed together
+// because a uniform-array slot is a full vec4 register regardless of the
+// declared type, so zw are free once xy are spent.
 uniform vec4  uCardState[MAX_CARDS];
 
 uniform float uStrandCount;
@@ -193,6 +188,9 @@ vec2 atlasUV(vec2 uv, float idx) {
   return (vec2(mod(idx, uGrid.x), floor(idx / uGrid.x)) + uv) / uGrid;
 }
 
+/* Bilinear value noise. The perturbation is small and rides on a surface
+   already in motion, so a simplex implementation would cost twenty more lines
+   for a difference nobody could pick out. */
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
@@ -209,6 +207,13 @@ float sdRoundBox(vec2 p, vec2 b, float r) {
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 
+/* One strand spanning two cards: a slab laid centre to centre, as thick at
+   each end as the edge it grows from, waisted at the midpoint and hanging under
+   its own weight.
+
+   Swept as a box, not a capsule. A capsule's circular cross-section would
+   balloon past the cards' own flat faces once they fused; a box tucks inside
+   them, so a merged pair keeps the outline of a single card. */
 float sdStrand(vec2 p, vec2 a, vec2 b, float rEnd, float rMid, float sag) {
   vec2 ba = b - a;
   float len = length(ba);
@@ -221,27 +226,37 @@ float sdStrand(vec2 p, vec2 a, vec2 b, float rEnd, float rMid, float sag) {
   float across = dot(q, nrm);
 
   float h = clamp(along / len + 0.5, 0.0, 1.0);
-  float bell = sin(3.14159265 * h);
-  across += sag * bell * nrm.y;
+  float bell = sin(3.14159265 * h);        // peaks mid-span, vanishes at both ends
+  across += sag * bell * nrm.y;            // hang, projected onto the perpendicular
   float r = mix(rMid, rEnd, pow(1.0 - bell, 1.7));
 
+  // Square ends, which finish inside the cards and are never on screen.
   return max(abs(along) - len * 0.5, abs(across) - r);
 }
 
+/* Smooth minimum - the one operator the whole look rests on. Against the 1e6
+   sentinel it degrades cleanly to an ordinary min(). */
 float smin(float a, float b, float k) {
   if (k <= 0.0001) return min(a, b);
   float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
   return mix(b, a, h) - k * h * (1.0 - h);
 }
 
+/* The upper and lower margins behave like the ground edge of a thick pane.
+   Since the whole scene is evaluated from p, displacing p at this point bends
+   cards and strands together in one pass - no extra target, no second warp. */
 float lipWarp(inout vec2 p) {
   if (uLipDepth <= 0.5) return 0.0;
   float dy = abs(p.y) - (uResolution.y * 0.5 - uLipDepth);
   if (dy <= 0.0) return 0.0;
 
   float t = clamp(dy / uLipDepth, 0.0, 1.0);
+  // A circular falloff: almost flat where the band begins and dropping away
+  // steeply at the boundary, which is what sells depth over a plain gradient.
   float bend = 1.0 - sqrt(max(0.0, 1.0 - t * t));
 
+  // Sampling from deeper inside displaces detail toward the margin, so the
+  // image elongates into the band and grows as it nears the boundary.
   p.y -= sign(p.y) * bend * (uLip.x + sin(p.x * uLip.w) * uLip.z);
   p.x *= 1.0 - bend * uLip.y;
   return bend;
@@ -251,8 +266,14 @@ void main() {
   vec2 p = (vUv - 0.5) * uResolution;
   float bend = lipWarp(p);
 
+  // Measured after the displacement so the cursor lives in the same warped
+  // space the cards do - carried into the band, its influence bends along with
+  // them instead of lying flat across the top.
   float toCursor = length(p - uCursor.xy);
 
+  // Fusion radius rises within a pool centred on the pointer, slackening the
+  // field just where contact occurs while it stays taut elsewhere. Computed once
+  // per pixel rather than per card, costing a single length() for the loop.
   float k = uFuse;
   if (uCursor.z > 0.001) {
     float t = 1.0 - smoothstep(0.0, max(uWake.x, 1.0), toCursor);
@@ -261,6 +282,9 @@ void main() {
 
   float d = 1e6;
 
+  // The nearest two cards, carried alongside the distance so colour resolves in
+  // the same loop rather than a second one. Where the field bridges a pair both
+  // register as close, which is precisely where the crossfade should sit.
   float d0 = 1e6, d1 = 1e6;
   vec2 uv0 = vec2(0.5), uv1 = vec2(0.5);
   float im0 = 0.0, im1 = 0.0;
@@ -276,6 +300,11 @@ void main() {
     if (grown <= 0.0001) continue;
 
     vec2 q = p - uCentre[i];
+    // Beyond this radius a card cannot reach the surface, so it is rejected
+    // before any transcendentals run - which is what makes two dozen of them
+    // affordable. Sized off the card itself, since one swollen beneath the
+    // cursor covers more ground than its resting footprint, as does the wider
+    // fusion radius around it.
     float cull = halfSpan * grown + k + uJitter + 8.0;
     if (dot(q, q) > cull * cull) continue;
 
@@ -283,12 +312,16 @@ void main() {
     q = vec2(q.x * ca + q.y * sa, -q.x * sa + q.y * ca);
 
     vec2 halfSize = max(uSize * 0.5 * st.xy, vec2(0.0001));
+    // Opens as a lozenge and settles into the rounded rectangle as it grows, so
+    // arrival reads as a droplet finding its form, not a box being scaled.
     float rMax = min(halfSize.x, halfSize.y);
     float r = min(rMax, mix(rMax, uCorner, smoothstep(0.30, 1.0, min(st.x, st.y))));
 
     float di = sdRoundBox(q, halfSize, r);
     d = smin(d, di, k);
 
+    // Clamped so that fused area beyond a card's own bounds takes that card's
+    // edge pixels instead of tiling or spilling into the adjacent atlas cell.
     vec2 luv = clamp(q / (2.0 * halfSize) + 0.5, 0.004, 0.996);
     luv.y = 1.0 - luv.y;
 
@@ -303,6 +336,9 @@ void main() {
   for (int i = 0; i < MAX_STRANDS; i++) {
     if (float(i) >= uStrandCount) break;
     vec4 par = uStrandPar[i];
+    // Negative radii are allowed, and wanted: they raise the strand's field
+    // above the surface so it withdraws smoothly instead of stalling at zero
+    // and leaving a half-resolved hairline behind.
     if (par.x <= -3.0) continue;
     vec2 a = uStrandA[i], b = uStrandB[i];
     vec2 mid = (a + b) * 0.5;
@@ -311,23 +347,37 @@ void main() {
     d = smin(d, sdStrand(p, a, b, par.x, par.y, par.z), par.w);
   }
 
+  // Surface tension, scaled to nothing at rest so a settled ring is perfectly
+  // smooth.
   if (uJitter > 0.001) {
     d += noise(p * 0.012 + vec2(uTime * 0.22, uTime * -0.17)) * uJitter;
   }
 
+  // A wake trailing the cursor, expanding outward and decaying over the same
+  // radius the slackening uses, so a quick pass leaves a disturbance that
+  // persists a moment after the gesture ends.
   if (uWake.y > 0.001) {
     d += sin(toCursor * uWake.z - uTime * uWake.w)
        * uWake.y * exp(-toCursor / max(uWake.x, 1.0));
   }
 
+  // Bounded at both ends rather than only below. The rejection test above puts
+  // a discontinuity in the field, and fwidth measured across it would return a
+  // huge derivative, tracing a translucent seam along every rejection boundary.
   float aa = clamp(fwidth(d), 0.5, 2.0);
   float alpha = 1.0 - smoothstep(-aa, aa, d);
   if (alpha <= 0.001) discard;
 
+  // Equal weight where the two nearest cards tie, settling on whichever leads
+  // once the margin exceeds the crossfade width. Artwork and brightness both
+  // ride this weight, so neither can leave a visible join through fused area.
   float nearest = smoothstep(-uCrossfade, uCrossfade, d1 - d0);
 
   vec3 col = uColor;
   if (uHasArt > 0.5) {
+    // Branch on a uniform, keeping derivatives well defined across the quad.
+    // The offset scales with band depth, so outside it all three taps collapse
+    // onto one texel.
     vec2 fr = vec2(uFringe * bend, 0.0);
     vec3 c0 = vec3(
       texture(uAtlas, atlasUV(uv0 + fr, im0)).r,
@@ -342,7 +392,12 @@ void main() {
     col = mix(c1, c0, nearest);
   }
 
+  // Every card except the selected one is attenuated, leaving that card the
+  // only fully lit surface in the frame.
   col *= mix(dm1, dm0, nearest);
+
+  // A little brightening where the band is steepest, so it reads as a surface
+  // taking light and not purely as a distortion.
   col += bend * uSheen;
 
   fragColor = vec4(col, alpha);
@@ -375,6 +430,8 @@ function build(gl: WebGL2RenderingContext, vert: string, frag: string) {
   return program;
 }
 
+/** Cached uniform handles. getUniformLocation performs a string lookup on every
+    call, and this sits inside the per-frame path. */
 function uniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
   const cache = new Map<string, WebGLUniformLocation | null>();
   return (name: string) => {
@@ -387,6 +444,9 @@ function uniforms(gl: WebGL2RenderingContext, program: WebGLProgram) {
   };
 }
 
+/** Resolves any CSS colour to 0-1 RGB by asking the browser instead of parsing
+    it. Theme tokens here are written in oklch, and naive comma-splitting of the
+    computed string yields a confidently incorrect near-black. */
 function colorReader() {
   const probe = document.createElement("canvas");
   probe.width = probe.height = 1;
@@ -401,7 +461,8 @@ function colorReader() {
   };
 }
 
-/** A single sheet, each cell cover-fitted at crisp 1024px cell resolution. */
+/** A single sheet, each cell cover-fitted. ESSL forbids indexing a sampler
+    array with a non-constant expression, ruling out one texture per card. */
 function packAtlas(
   images: HTMLImageElement[],
   cols: number,
@@ -416,6 +477,8 @@ function packAtlas(
   if (!ctx) return sheet;
   const cellH = Math.round(cell / ratio);
   images.forEach((image, i) => {
+    // A card that never decoded has no natural size; scaling by it yields
+    // Infinity and drawImage throws, taking every later cell with it.
     if (!image.naturalWidth || !image.naturalHeight) return;
     const x = (i % cols) * cell;
     const y = Math.floor(i / cols) * cellH;
@@ -438,26 +501,21 @@ function packAtlas(
 export function MoltenRingCarousel({
   items,
   brand,
-  arc = 1.35,
-  cardSize = 0.58,
+  arc = 1,
+  cardSize = 0.265,
   cardRatio = 1.5,
   fuse = FUSE,
   threads = true,
   glass = true,
-  onSelect,
+  className,
   controlledIndex,
   scrollControlled = false,
-  onActiveChange,
-  activeInView,
-  showFlanks = true,
-  className,
   ...props
 }: MoltenRingCarouselProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [active, setActive] = React.useState(0);
   const [reduced, setReduced] = React.useState(false);
   const [supported, setSupported] = React.useState(true);
-  const navigate = useNavigate();
 
   const settings = React.useRef({
     arc,
@@ -466,24 +524,25 @@ export function MoltenRingCarousel({
     fuse,
     threads,
     glass,
+    controlledIndex,
+    scrollControlled,
   });
-  const onSelectRef = React.useRef(onSelect);
-  const onActiveChangeRef = React.useRef(onActiveChange);
-  const activeInViewRef = React.useRef(activeInView);
-  const controlledRef = React.useRef(controlledIndex);
-  const navigateRef = React.useRef(navigate);
-  const itemsRef = React.useRef(items);
-
+  // Kept in a ref so the render loop reads current props without the effect
+  // below having to re-run (and rebuild the atlas) on every render.
   React.useEffect(() => {
-    settings.current = { arc, cardSize, cardRatio, fuse, threads, glass };
-    onSelectRef.current = onSelect;
-    onActiveChangeRef.current = onActiveChange;
-    activeInViewRef.current = activeInView;
-    controlledRef.current = controlledIndex;
-    navigateRef.current = navigate;
-    itemsRef.current = items;
+    settings.current = {
+      arc,
+      cardSize,
+      cardRatio,
+      fuse,
+      threads,
+      glass,
+      controlledIndex,
+      scrollControlled,
+    };
   });
-
+  /** Populated by the render loop so keyboard input drives the same rotation the
+    wheel does. */
   const step = React.useRef<(by: number) => void>(() => {});
 
   const count = Math.min(items.length, MAX_CARDS);
@@ -500,7 +559,9 @@ export function MoltenRingCarousel({
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !count) return;
-
+    // Unpremultiplied alpha, so whatever the ring does not cover is simply the
+    // page underneath - which is how the shader stays theme-agnostic without
+    // ever being handed the palette.
     const gl = canvas.getContext("webgl2", {
       alpha: true,
       premultipliedAlpha: false,
@@ -528,17 +589,23 @@ export function MoltenRingCarousel({
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-    // --- art (High-Res 1024px cells for Retina Display) -------------------
-    const COLS = Math.min(3, count);
-    const CELL = 1024;
+    // --- art --------------------------------------------------------------
+    const COLS = Math.min(4, count);
+    const CELL = 512;
     let atlas: WebGLTexture | null = null;
     let loaded = 0;
     const images = items.slice(0, count).map((item) => {
       const image = new Image();
       image.crossOrigin = "anonymous";
       image.decoding = "async";
+      // Settled, not loaded. The sheet is all-or-nothing, so a single URL that
+      // 404s or fails CORS would otherwise hold every card untextured for the
+      // life of the component - the failure mode is a blank white ring with
+      // nothing in the console.
       const settle = () => {
         if (++loaded < count) return;
+        // Assembled once the last image settles; packing early would leave unset
+        // cells sampling as solid black cards.
         atlas = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, atlas);
         gl.texImage2D(
@@ -549,6 +616,8 @@ export function MoltenRingCarousel({
           gl.UNSIGNED_BYTE,
           packAtlas(images, COLS, CELL, settings.current.cardRatio),
         );
+        // Mipmaps are skipped - lower levels would average across cell borders,
+        // and cards occupy enough pixels that minification never applies.
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -564,12 +633,10 @@ export function MoltenRingCarousel({
     });
 
     // --- state ------------------------------------------------------------
-    const FRONT = Math.floor(count / 2);
-    // Start with card 0 in the front slot
     let width = 0;
     let height = 0;
-    let progress = -FRONT;
-    let goal = -FRONT;
+    let progress = 0;
+    let goal = 0;
     let lastInput = 0;
     let snapped = true;
     let hovered = -1;
@@ -596,12 +663,17 @@ export function MoltenRingCarousel({
     const strandB = new Float32Array(MAX_STRANDS * 2);
     const strandPar = new Float32Array(MAX_STRANDS * 4);
 
+    /** Per-frame screen placement for every card, used by hit-testing and by the
+        strand solver below. */
     const at = Array.from({ length: count }, () => ({
       x: 0,
       y: 0,
       angle: 0,
       scale: 1,
     }));
+    /** Index of the slot squared up to the viewer. Half the count would land
+        between two slots whenever the count is odd, so it is floored. */
+    const FRONT = Math.floor(count / 2);
 
     const resize = () => {
       const w = canvas.clientWidth;
@@ -613,30 +685,22 @@ export function MoltenRingCarousel({
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
     };
+    resize();
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
-    let hasEntered = false;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          hasEntered = true;
-        }
-      },
-      { threshold: 0.1 }
-    );
-    io.observe(canvas);
-
     // --- input ------------------------------------------------------------
     const onWheel = (event: WheelEvent) => {
-      if (scrollControlled) return; // Allow natural page scroll to drive the carousel
+      // Scroll-controlled: the page owns the wheel, and the ring follows the
+      // progress handed in from outside.
+      if (settings.current.scrollControlled) return;
       event.preventDefault();
       tween = null;
       goal += event.deltaY * WHEEL;
       lastInput = performance.now();
       snapped = false;
     };
-    canvas.addEventListener("wheel", onWheel, { passive: scrollControlled });
+    canvas.addEventListener("wheel", onWheel, { passive: false });
 
     step.current = (by: number) => {
       tween = { from: goal, to: Math.round(goal) + by, at: performance.now() };
@@ -646,30 +710,11 @@ export function MoltenRingCarousel({
 
     let dragFrom: number | null = null;
     let dragTravel = 0;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
     const onDown = (event: PointerEvent) => {
-      touchStartX = event.clientX;
-      touchStartY = event.clientY;
-      touchStartTime = performance.now();
+      dragFrom = event.clientY;
       dragTravel = 0;
       tween = null;
-
-      // In scrollControlled mode on touch devices, NEVER capture pointer!
-      // This allows the mobile browser to natively handle vertical touch scrolling.
-      if (scrollControlled && event.pointerType === "touch") {
-        dragFrom = null;
-        return;
-      }
-
-      dragFrom = event.clientY;
-      if (event.pointerType !== "touch") {
-        try {
-          canvas.setPointerCapture(event.pointerId);
-        } catch {}
-      }
+      canvas.setPointerCapture(event.pointerId);
     };
     const onMove = (event: PointerEvent) => {
       const box = canvas.getBoundingClientRect();
@@ -678,8 +723,7 @@ export function MoltenRingCarousel({
       pointerSpeed = Math.hypot(nx - pointerX, ny - pointerY);
       pointerX = nx;
       pointerY = ny;
-
-      if (dragFrom !== null && !scrollControlled) {
+      if (dragFrom !== null) {
         const travel = dragFrom - event.clientY;
         dragTravel += Math.abs(travel);
         dragFrom = event.clientY;
@@ -688,56 +732,18 @@ export function MoltenRingCarousel({
         snapped = false;
       }
     };
-    const onUp = (event?: PointerEvent) => {
-      if (event && canvas.hasPointerCapture(event.pointerId)) {
-        try {
-          canvas.releasePointerCapture(event.pointerId);
-        } catch {}
-      }
-
-      const isTouch = event?.pointerType === "touch";
-      const totalMove = event
-        ? Math.hypot(event.clientX - touchStartX, event.clientY - touchStartY)
-        : dragTravel;
-      const elapsedTime = performance.now() - touchStartTime;
-
-      const wasTap = (isTouch && totalMove < 15 && elapsedTime < 400) ||
-                    (!isTouch && dragFrom !== null && dragTravel < CLICK_SLOP);
-
+    const onUp = () => {
+      const wasClick = dragFrom !== null && dragTravel < CLICK_SLOP;
       dragFrom = null;
-      if (!wasTap || hovered < 0) return;
-
-      const activeIdx = (((Math.round(progress) + FRONT) % count) + count) % count;
-
-      if (hovered === activeIdx) {
-        const targetItem = itemsRef.current[hovered];
-        if (targetItem) {
-          if (onSelectRef.current) {
-            onSelectRef.current(targetItem, hovered);
-          } else if (targetItem.href) {
-            if (targetItem.href.startsWith("http")) {
-              window.open(targetItem.href, "_blank", "noopener,noreferrer");
-            } else if (targetItem.href.startsWith("#")) {
-              const el = document.querySelector(targetItem.href);
-              el?.scrollIntoView({ behavior: "smooth" });
-            } else {
-              navigateRef.current(targetItem.href);
-            }
-          }
-        }
-        return;
-      }
-
-      if (!scrollControlled) {
-        // Rotate to front slot
-        const want = hovered - FRONT;
-        tween = {
-          from: goal,
-          to: want + Math.round((goal - want) / count) * count,
-          at: performance.now(),
-        };
-        snapped = true;
-      }
+      if (!wasClick || hovered < 0) return;
+      // Rotate to the front slot, taking whichever direction is shorter.
+      const want = (((hovered - FRONT) % count) + count) % count;
+      tween = {
+        from: goal,
+        to: want + Math.round((goal - want) / count) * count,
+        at: performance.now(),
+      };
+      snapped = true;
     };
     const onLeave = () => {
       pointerX = -1;
@@ -763,14 +769,16 @@ export function MoltenRingCarousel({
       if (ticks++ % THEME_EVERY === 0)
         ink = readColor(getComputedStyle(canvas).color);
 
-      const shouldBloom = atlas && (hasEntered || activeInViewRef.current);
-      if (shouldBloom)
+      if (atlas)
         entry = reduced ? 1 : Math.min(1, entry + (dt * 1000) / ENTRY_MS);
       const spread = inOutCubic(entry);
 
       // --- turn -----------------------------------------------------------
-      if (controlledRef.current !== undefined) {
-        goal = -FRONT + controlledRef.current;
+      // A controlled index wins outright: the page is the clock, so there is
+      // nothing to ease toward and no idle snap to wait for.
+      const controlled = config.controlledIndex;
+      if (controlled !== undefined) {
+        goal = -FRONT + controlled;
         tween = null;
       } else if (tween) {
         const t = clamp((now - tween.at) / CLICK_MS, 0, 1);
@@ -780,32 +788,25 @@ export function MoltenRingCarousel({
         goal = Math.round(goal);
         snapped = true;
       }
-
-      progress +=
-        (goal - progress) * (reduced ? 1 : controlledRef.current !== undefined ? 0.12 : snapped ? SNAP_EASE : EASE);
+      const ease =
+        controlled !== undefined ? CONTROLLED_EASE : snapped ? SNAP_EASE : EASE;
+      progress += (goal - progress) * (reduced ? 1 : ease);
       const speed = Math.abs(goal - progress);
 
-      const near = (((Math.round(progress) + FRONT) % count) + count) % count;
-      setActive((prev) => {
-        if (prev !== near) {
-          onActiveChangeRef.current?.(near);
-          return near;
-        }
-        return prev;
-      });
+      const near = (((Math.round(goal) + FRONT) % count) + count) % count;
+      setActive((prev) => (prev === near ? prev : near));
 
-      // --- geometry: HEROIC CENTERPIECE SCALE -----------------------------
-      // Up to ~58% of viewport width and ~70% of viewport height (widescreen 1.5:1 ratio)
-      const maxLongByHeight = height * 0.70 * config.cardRatio;
-      const maxLongByWidth = width * (width < 768 ? 0.90 : config.cardSize);
-      const long = Math.min(maxLongByWidth, maxLongByHeight);
+      // --- geometry --------------------------------------------------------
+      const long = width * config.cardSize;
       const short = long / config.cardRatio;
       const radius = width * config.arc;
       const angleStep = (short * SPACING) / radius;
-      const centreX = -radius;
+      const centreX = -radius; // the ring's near point lands on the stage centre
 
       for (let i = 0; i < count; i++) {
         const slot = ((((i - progress) % count) + count) % count) - FRONT;
+        // The deck begins collapsed at the front slot and spreads outward into
+        // position, which is the motion that pulls the strands.
         const angle = slot * angleStep * spread;
         at[i].angle = angle;
         at[i].x = centreX + Math.cos(angle) * radius;
@@ -813,6 +814,7 @@ export function MoltenRingCarousel({
       }
 
       // --- pointer ---------------------------------------------------------
+      // Cursor mapped into shader space - origin mid-stage, y increasing upward.
       const mx = pointerX >= 0 ? pointerX - width / 2 : 0;
       const my = pointerY >= 0 ? height / 2 - pointerY : 0;
       const present = pointerX >= 0 ? 1 : 0;
@@ -842,11 +844,15 @@ export function MoltenRingCarousel({
           : 0;
         const isHovered = i === hovered ? 1 : 0;
 
+        // Tipping toward the cursor is quick and returning is slow; that
+        // asymmetry is what gives the surface a sense of mass.
         const towardX = dx * (pull * pull) * PULL * long * 0.02;
         const towardY = dy * (pull * pull) * PULL * long * 0.02;
         leanX[i] += (towardX - leanX[i]) * (pull > 0 ? GRAB : RELEASE);
         leanY[i] += (towardY - leanY[i]) * (pull > 0 ? GRAB : RELEASE);
 
+        // Neighbours clear a path for the pointed-at card. The block above
+        // tracks the cursor; this one tracks the card it settled on.
         let push = 0;
         let dimTarget = 0;
         if (hovered >= 0 && i !== hovered) {
@@ -862,6 +868,7 @@ export function MoltenRingCarousel({
         }
         dim[i] += (dimTarget - dim[i]) * (dimTarget > dim[i] ? GRAB : RELEASE);
 
+        // The pointed-at card grows and its neighbours shed the same amount.
         const wantSwell =
           pull * pull * SWELL +
           isHovered * NEIGHBOUR_SCALE -
@@ -871,7 +878,7 @@ export function MoltenRingCarousel({
 
         at[i].x += leanX[i];
         at[i].y += leanY[i] + push;
-        at[i].scale = (0.01 + 0.99 * spread) * (1 + swell[i]);
+        at[i].scale = (0.18 + 0.82 * spread) * (1 + swell[i]);
 
         pos[i * 2] = at[i].x;
         pos[i * 2 + 1] = at[i].y;
@@ -883,12 +890,18 @@ export function MoltenRingCarousel({
       }
 
       // --- strands ----------------------------------------------------------
+      // Narrowing, hanging and parting all fall out of the field itself - none
+      // of it is animated, because a strand is a term in the same equation
+      // rather than a shape drawn between two cards.
       if (config.threads) {
         for (let i = 0; i < count && strands < MAX_STRANDS; i++) {
           const j = (i + 1) % count;
+          // Only neighbours that are actually adjacent on the visible arc.
           const gap = Math.hypot(at[j].x - at[i].x, at[j].y - at[i].y);
           const opening = (gap - short) / (short * STRAND_SNAP);
           if (opening > 1 || opening < -1) continue;
+          // Present while the deck is still spreading, and anywhere the cursor
+          // is holding a pair apart.
           const strength = Math.max(
             1 - spread,
             hovered === i || hovered === j ? 1 : 0,
@@ -928,6 +941,7 @@ export function MoltenRingCarousel({
       gl.uniform2fv(u("uStrandB"), strandB);
       gl.uniform4fv(u("uStrandPar"), strandPar);
       gl.uniform1f(u("uFuse"), config.fuse * long);
+      // Falls to zero at rest, leaving a settled ring perfectly smooth.
       gl.uniform1f(
         u("uJitter"),
         reduced ? 0 : WOBBLE * long * clamp(speed * 2 + (1 - spread), 0, 1),
@@ -966,7 +980,6 @@ export function MoltenRingCarousel({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      io.disconnect();
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
@@ -979,62 +992,36 @@ export function MoltenRingCarousel({
       gl.deleteVertexArray(quad);
       gl.deleteProgram(program);
     };
-  }, [sources, count, reduced, scrollControlled, items]);
+    // `sources` stands in for `items`: the loop owns the atlas, so it must
+    // rebuild when the pictures change and must not when a label does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources, count, reduced]);
 
   const item = items[active];
 
-  // No WebGL2 fallback
+  // No WebGL2 - a blank rectangle is the one outcome worse than no effect. The
+  // ring without its shader is still the work: a native snap scroller of the
+  // same pictures, in the same order.
   if (!supported) {
     return (
       <section
         aria-roledescription="carousel"
         aria-label={brand ?? "Gallery"}
         className={cn(
-          "bg-background text-foreground relative h-full min-h-[28rem] w-full",
+          "bg-background text-foreground relative h-full min-h-[24rem] w-full",
           className,
         )}
         {...props}
       >
-        <ul className="flex h-full snap-y snap-mandatory flex-col items-center gap-6 overflow-y-auto py-8 px-4">
+        <ul className="flex h-full snap-y snap-mandatory flex-col items-center gap-3 overflow-y-auto py-[6%]">
           {items.map((entry) => (
-            <li key={entry.image} className="w-full max-w-xl shrink-0 snap-center">
-              {entry.href ? (
-                <Link
-                  to={entry.href}
-                  className="block group rounded-2xl overflow-hidden border border-border bg-card p-4 transition-all hover:border-primary/50 shadow-lg"
-                >
-                  <img
-                    src={entry.image}
-                    alt={entry.title}
-                    className="w-full rounded-xl object-cover"
-                    style={{ aspectRatio: cardRatio }}
-                  />
-                  <div className="mt-3 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-foreground text-lg">{entry.title}</h4>
-                      {entry.description && (
-                        <p className="text-sm text-muted-foreground mt-0.5">{entry.description}</p>
-                      )}
-                    </div>
-                    <ArrowUpRight className="w-5 h-5 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </Link>
-              ) : (
-                <div className="rounded-2xl overflow-hidden border border-border bg-card p-4">
-                  <img
-                    src={entry.image}
-                    alt={entry.title}
-                    className="w-full rounded-xl object-cover"
-                    style={{ aspectRatio: cardRatio }}
-                  />
-                  <div className="mt-3">
-                    <h4 className="font-semibold text-foreground text-lg">{entry.title}</h4>
-                    {entry.description && (
-                      <p className="text-sm text-muted-foreground mt-0.5">{entry.description}</p>
-                    )}
-                  </div>
-                </div>
-              )}
+            <li key={entry.image} className="w-[62%] shrink-0 snap-center">
+              <img
+                src={entry.image}
+                alt={entry.title}
+                className="bg-muted w-full rounded-lg object-cover"
+                style={{ aspectRatio: cardRatio }}
+              />
             </li>
           ))}
         </ul>
@@ -1047,7 +1034,7 @@ export function MoltenRingCarousel({
       aria-roledescription="carousel"
       aria-label={brand ?? "Gallery"}
       className={cn(
-        "bg-background text-foreground relative h-full min-h-[30rem] w-full overflow-hidden select-none",
+        "bg-background text-foreground relative h-full min-h-[24rem] w-full overflow-hidden select-none",
         className,
       )}
       {...props}
@@ -1063,16 +1050,16 @@ export function MoltenRingCarousel({
           scrollControlled ? "touch-pan-y" : "touch-pan-x"
         )}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown" || event.key === "ArrowRight") step.current(1);
-          else if (event.key === "ArrowUp" || event.key === "ArrowLeft") step.current(-1);
-          else if (event.key === "Enter" && item?.href) {
-            navigate(item.href);
-          } else return;
+          if (event.key === "ArrowDown") step.current(1);
+          else if (event.key === "ArrowUp") step.current(-1);
+          else return;
           event.preventDefault();
         }}
       />
 
-      {/* Screen-reader list */}
+      {/* Everything visible is painted into the canvas, so assistive technology
+          and keyboard users are given this equivalent instead: the same entries
+          in the same sequence. */}
       <ul className="sr-only">
         {items.map((entry, i) => (
           <li
@@ -1083,70 +1070,31 @@ export function MoltenRingCarousel({
           >
             {entry.title}
             {entry.meta ? `. ${entry.meta}` : ""}
-            {entry.description ? `. ${entry.description}` : ""}
           </li>
         ))}
       </ul>
 
-      {/* Optional Top Left Brand / Tagline */}
       {brand ? (
-        <div className="pointer-events-none absolute top-6 left-6 md:left-10 z-10 flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-semibold tracking-wider uppercase text-foreground/80 font-mono">
-            {brand}
-          </span>
+        <div className="pointer-events-none absolute top-[6%] left-[5%] text-sm font-medium tracking-tight">
+          {brand}
         </div>
       ) : null}
 
-      {/* Flanks (Only rendered if showFlanks is true) */}
-      {showFlanks ? (
-        <>
-          <div className="absolute top-1/2 left-6 md:left-12 -translate-y-1/2 z-10 max-w-[260px] sm:max-w-[320px] pointer-events-none">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-muted-foreground text-xs font-mono tabular-nums px-2 py-0.5 rounded-full border border-border/70 bg-surface/70">
-                {String(active + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
-              </span>
-              {item?.badge && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-primary/30 text-primary bg-primary/10 uppercase tracking-widest font-mono font-semibold">
-                  {item.badge}
-                </span>
-              )}
-            </div>
+      {/* Labels flank the arc the way a plate caption does - index and title to
+          the left, classification to the right. */}
+      <div className="pointer-events-none absolute top-1/2 left-[5%] -translate-y-1/2">
+        <div className="text-muted-foreground text-xs tabular-nums">
+          {String(active + 1).padStart(2, "0")}
+        </div>
+        <div className="mt-1 text-xl leading-none font-medium tracking-tight">
+          {item?.title}
+        </div>
+      </div>
 
-            <h3 className="text-2xl sm:text-4xl font-display font-bold tracking-tight text-foreground drop-shadow-md">
-              {item?.title}
-            </h3>
-
-            {item?.description && (
-              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">
-                {item.description}
-              </p>
-            )}
-
-            {item?.href && (
-              <div className="mt-4 pointer-events-auto">
-                <Link
-                  to={item.href}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-foreground bg-surface/80 hover:bg-surface border border-border/80 hover:border-primary/50 shadow-md transition-all group backdrop-blur-md"
-                >
-                  <span>Check it out</span>
-                  <ArrowUpRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 text-primary" />
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {item?.meta ? (
-            <div className="pointer-events-none absolute top-1/2 right-6 md:right-12 -translate-y-1/2 text-right z-10 hidden sm:block max-w-[200px]">
-              <div className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/70 mb-1">
-                Tier &amp; Status
-              </div>
-              <div className="text-foreground text-xs sm:text-sm font-semibold">
-                {item.meta}
-              </div>
-            </div>
-          ) : null}
-        </>
+      {item?.meta ? (
+        <div className="text-muted-foreground pointer-events-none absolute top-1/2 right-[5%] -translate-y-1/2 text-right text-xs">
+          {item.meta}
+        </div>
       ) : null}
     </section>
   );
