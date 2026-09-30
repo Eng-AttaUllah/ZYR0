@@ -51,15 +51,6 @@ export interface MoltenRingCarouselProps extends Omit<
   glass?: boolean;
   /** Extra classes on the root surface. @default undefined */
   className?: string;
-  /** Rotation handed in from outside, in card slots (0 = first card front).
-      Omit to let the wheel and drag drive the ring. A getter is preferred over
-      a plain number: the loop calls it every frame, so a scroll driver can
-      publish progress from a ref and never re-render React while the page
-      moves under it. */
-  controlledIndex?: number | (() => number);
-  /** When true the wheel is left alone so the page can scroll, and the ring
-      follows `controlledIndex` instead. @default false */
-  scrollControlled?: boolean;
 }
 
 /** Each uniform-array element occupies a vec4 register; WebGL2 guarantees only
@@ -117,9 +108,6 @@ const DRAG = 0.007; // ... and per px dragged
 const EASE = 0.08;
 const SNAP_IDLE = 260;
 const SNAP_EASE = 0.06;
-/** Tracking a value handed in from outside wants a firmer hand than idle
-    snapping - close enough to follow the page, still eased enough not to jerk. */
-const CONTROLLED_EASE = 0.12;
 const CLICK_SLOP = 6;
 const CLICK_MS = 700;
 
@@ -511,8 +499,6 @@ export function MoltenRingCarousel({
   threads = true,
   glass = true,
   className,
-  controlledIndex,
-  scrollControlled = false,
   ...props
 }: MoltenRingCarouselProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -527,22 +513,12 @@ export function MoltenRingCarousel({
     fuse,
     threads,
     glass,
-    controlledIndex,
-    scrollControlled,
   });
-  // Kept in a ref so the render loop reads current props without the effect
-  // below having to re-run (and rebuild the atlas) on every render.
+  // Written in an effect rather than during render: `react-hooks/refs` forbids
+  // mutating a ref in render, and with no dep array this still lands before the
+  // frame loop reads it, so the loop sees fresh props either way.
   React.useEffect(() => {
-    settings.current = {
-      arc,
-      cardSize,
-      cardRatio,
-      fuse,
-      threads,
-      glass,
-      controlledIndex,
-      scrollControlled,
-    };
+    settings.current = { arc, cardSize, cardRatio, fuse, threads, glass };
   });
   /** Populated by the render loop so keyboard input drives the same rotation the
     wheel does. */
@@ -694,9 +670,6 @@ export function MoltenRingCarousel({
 
     // --- input ------------------------------------------------------------
     const onWheel = (event: WheelEvent) => {
-      // Scroll-controlled: the page owns the wheel, and the ring follows the
-      // progress handed in from outside.
-      if (settings.current.scrollControlled) return;
       event.preventDefault();
       tween = null;
       goal += event.deltaY * WHEEL;
@@ -719,12 +692,10 @@ export function MoltenRingCarousel({
       tween = null;
       canvas.setPointerCapture(event.pointerId);
     };
-    // offsetX/Y already measures against this element, so a move costs no
-    // layout. getBoundingClientRect here forced a reflow on every pointermove,
-    // which on touch arrives interleaved with the scroll gesture itself.
     const onMove = (event: PointerEvent) => {
-      const nx = event.offsetX;
-      const ny = event.offsetY;
+      const box = canvas.getBoundingClientRect();
+      const nx = event.clientX - box.left;
+      const ny = event.clientY - box.top;
       pointerSpeed = Math.hypot(nx - pointerX, ny - pointerY);
       pointerX = nx;
       pointerY = ny;
@@ -779,15 +750,7 @@ export function MoltenRingCarousel({
       const spread = inOutCubic(entry);
 
       // --- turn -----------------------------------------------------------
-      // A controlled index wins outright: the page is the clock, so there is
-      // nothing to ease toward and no idle snap to wait for. A getter is read
-      // here rather than a value, so the driver never has to re-render React.
-      const raw = config.controlledIndex;
-      const controlled = typeof raw === "function" ? raw() : raw;
-      if (controlled !== undefined) {
-        goal = -FRONT + controlled;
-        tween = null;
-      } else if (tween) {
+      if (tween) {
         const t = clamp((now - tween.at) / CLICK_MS, 0, 1);
         goal = tween.from + (tween.to - tween.from) * outCubic(t);
         if (t >= 1) tween = null;
@@ -795,17 +758,8 @@ export function MoltenRingCarousel({
         goal = Math.round(goal);
         snapped = true;
       }
-      // CONTROLLED_EASE is quoted per frame at 60fps. Run as written it makes a
-      // 120Hz panel converge twice as fast as a 60Hz one, and any frame dropped
-      // while the page scrolls stalls the ring behind it - which is what reads
-      // as a stutter. Converted to a time constant it still equals 0.12 at 60fps.
-      const ease =
-        controlled !== undefined
-          ? 1 - Math.pow(1 - CONTROLLED_EASE, dt * 60)
-          : snapped
-            ? SNAP_EASE
-            : EASE;
-      progress += (goal - progress) * (reduced ? 1 : ease);
+      progress +=
+        (goal - progress) * (reduced ? 1 : snapped ? SNAP_EASE : EASE);
       const speed = Math.abs(goal - progress);
 
       const near = (((Math.round(goal) + FRONT) % count) + count) % count;
@@ -1060,10 +1014,7 @@ export function MoltenRingCarousel({
         role="listbox"
         aria-label={brand ?? "Gallery"}
         aria-activedescendant={`molten-ring-${active}`}
-        className={cn(
-          "text-foreground focus-visible:outline-foreground absolute inset-0 h-full w-full cursor-grab outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing",
-          scrollControlled ? "touch-pan-y" : "touch-pan-x"
-        )}
+        className="text-foreground focus-visible:outline-foreground absolute inset-0 h-full w-full cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing"
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") step.current(1);
           else if (event.key === "ArrowUp") step.current(-1);
