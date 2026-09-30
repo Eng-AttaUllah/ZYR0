@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { MoltenRingCarousel, type MoltenRingItem } from '@/components/ui/molten-ring-carousel';
 
 const playgroundItems: MoltenRingItem[] = [
@@ -38,27 +38,23 @@ const count = playgroundItems.length;
 
 export default function PlaygroundShowcase() {
   const containerRef = useRef<HTMLElement>(null);
-  const [progress, setProgress] = useState(0);
 
-  // Scroll progress through the pinned track, in card slots (0 .. count - 1).
-  const onScroll = useCallback(() => {
+  // Read straight off the layout from inside the ring's own frame loop, so the
+  // page stays the clock without React ever being involved. The previous shape
+  // - a scroll listener calling setState - re-rendered the whole subtree on
+  // every scroll event, and subtracted window.innerHeight from a viewport-unit
+  // track: on mobile the URL bar changes innerHeight as you drag, so the
+  // denominator moved mid-gesture and the ring jumped.
+  const readProgress = useCallback(() => {
     const el = containerRef.current;
-    if (!el) return;
-    const totalDist = el.offsetHeight - window.innerHeight;
-    if (totalDist <= 0) return;
+    if (!el) return 0;
+    const stage = el.firstElementChild as HTMLElement | null;
+    // Both heights come from viewport units, so neither is disturbed by the bar.
+    const totalDist = el.offsetHeight - (stage ? stage.offsetHeight : window.innerHeight);
+    if (totalDist <= 0) return 0;
     const passed = -el.getBoundingClientRect().top;
-    setProgress(Math.min(1, Math.max(0, passed / totalDist)) * (count - 1));
+    return Math.min(1, Math.max(0, passed / totalDist)) * (count - 1);
   }, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-    };
-  }, [onScroll]);
 
   return (
     <section
@@ -71,7 +67,7 @@ export default function PlaygroundShowcase() {
         <MoltenRingCarousel
           items={playgroundItems}
           brand="The Playground"
-          controlledIndex={progress}
+          controlledIndex={readProgress}
           scrollControlled
           className="h-full w-full bg-transparent"
         />

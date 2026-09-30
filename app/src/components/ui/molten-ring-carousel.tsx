@@ -52,8 +52,11 @@ export interface MoltenRingCarouselProps extends Omit<
   /** Extra classes on the root surface. @default undefined */
   className?: string;
   /** Rotation handed in from outside, in card slots (0 = first card front).
-      Omit to let the wheel and drag drive the ring. */
-  controlledIndex?: number;
+      Omit to let the wheel and drag drive the ring. A getter is preferred over
+      a plain number: the loop calls it every frame, so a scroll driver can
+      publish progress from a ref and never re-render React while the page
+      moves under it. */
+  controlledIndex?: number | (() => number);
   /** When true the wheel is left alone so the page can scroll, and the ring
       follows `controlledIndex` instead. @default false */
   scrollControlled?: boolean;
@@ -716,10 +719,12 @@ export function MoltenRingCarousel({
       tween = null;
       canvas.setPointerCapture(event.pointerId);
     };
+    // offsetX/Y already measures against this element, so a move costs no
+    // layout. getBoundingClientRect here forced a reflow on every pointermove,
+    // which on touch arrives interleaved with the scroll gesture itself.
     const onMove = (event: PointerEvent) => {
-      const box = canvas.getBoundingClientRect();
-      const nx = event.clientX - box.left;
-      const ny = event.clientY - box.top;
+      const nx = event.offsetX;
+      const ny = event.offsetY;
       pointerSpeed = Math.hypot(nx - pointerX, ny - pointerY);
       pointerX = nx;
       pointerY = ny;
@@ -775,8 +780,10 @@ export function MoltenRingCarousel({
 
       // --- turn -----------------------------------------------------------
       // A controlled index wins outright: the page is the clock, so there is
-      // nothing to ease toward and no idle snap to wait for.
-      const controlled = config.controlledIndex;
+      // nothing to ease toward and no idle snap to wait for. A getter is read
+      // here rather than a value, so the driver never has to re-render React.
+      const raw = config.controlledIndex;
+      const controlled = typeof raw === "function" ? raw() : raw;
       if (controlled !== undefined) {
         goal = -FRONT + controlled;
         tween = null;
@@ -788,8 +795,16 @@ export function MoltenRingCarousel({
         goal = Math.round(goal);
         snapped = true;
       }
+      // CONTROLLED_EASE is quoted per frame at 60fps. Run as written it makes a
+      // 120Hz panel converge twice as fast as a 60Hz one, and any frame dropped
+      // while the page scrolls stalls the ring behind it - which is what reads
+      // as a stutter. Converted to a time constant it still equals 0.12 at 60fps.
       const ease =
-        controlled !== undefined ? CONTROLLED_EASE : snapped ? SNAP_EASE : EASE;
+        controlled !== undefined
+          ? 1 - Math.pow(1 - CONTROLLED_EASE, dt * 60)
+          : snapped
+            ? SNAP_EASE
+            : EASE;
       progress += (goal - progress) * (reduced ? 1 : ease);
       const speed = Math.abs(goal - progress);
 
