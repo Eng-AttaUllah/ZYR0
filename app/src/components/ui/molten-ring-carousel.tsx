@@ -668,8 +668,26 @@ export function MoltenRingCarousel({
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
+    // --- gesture scope -----------------------------------------------------
+    // One flag drives every decision below. Phones get a deck with a last card
+    // and hand vertical swipes back to the page, so the section can be left;
+    // desktop keeps the shipped behaviour - the wheel turns the ring and the
+    // deck runs on forever.
+    const mobileQuery = window.matchMedia("(max-width: 767.98px)");
+    let mobile = mobileQuery.matches;
+    const syncMobile = () => {
+      mobile = mobileQuery.matches;
+      // Inline: touch-action is decided the moment a gesture starts, and the
+      // class on the canvas is the desktop value.
+      canvas.style.touchAction = mobile ? "pan-y" : "pan-x";
+    };
+    syncMobile();
+    mobileQuery.addEventListener("change", syncMobile);
+
     // --- input ------------------------------------------------------------
     const onWheel = (event: WheelEvent) => {
+      // On phones the gesture belongs to the page, so the user can wheel out.
+      if (mobile) return;
       event.preventDefault();
       tween = null;
       goal += event.deltaY * WHEEL;
@@ -686,8 +704,12 @@ export function MoltenRingCarousel({
 
     let dragFrom: number | null = null;
     let dragTravel = 0;
+    // Horizontal on phones: the vertical axis belongs to the page, and a
+    // sideways swipe is what a card strip asks for anyway.
+    let dragAxisX = false;
     const onDown = (event: PointerEvent) => {
-      dragFrom = event.clientY;
+      dragAxisX = mobile;
+      dragFrom = dragAxisX ? event.clientX : event.clientY;
       dragTravel = 0;
       tween = null;
       canvas.setPointerCapture(event.pointerId);
@@ -700,9 +722,10 @@ export function MoltenRingCarousel({
       pointerX = nx;
       pointerY = ny;
       if (dragFrom !== null) {
-        const travel = dragFrom - event.clientY;
+        const along = dragAxisX ? event.clientX : event.clientY;
+        const travel = dragFrom - along;
         dragTravel += Math.abs(travel);
-        dragFrom = event.clientY;
+        dragFrom = along;
         goal += travel * DRAG;
         lastInput = performance.now();
         snapped = false;
@@ -714,11 +737,13 @@ export function MoltenRingCarousel({
       if (!wasClick || hovered < 0) return;
       // Rotate to the front slot, taking whichever direction is shorter.
       const want = (((hovered - FRONT) % count) + count) % count;
-      tween = {
-        from: goal,
-        to: want + Math.round((goal - want) / count) * count,
-        at: performance.now(),
-      };
+      // The wrap picks the equivalent lap nearest the current one, which on a
+      // phone can land past the deck's end and get clamped straight back - a
+      // click that does nothing. The bounded deck has exactly one answer.
+      const to = mobile
+        ? want
+        : want + Math.round((goal - want) / count) * count;
+      tween = { from: goal, to, at: performance.now() };
       snapped = true;
     };
     const onLeave = () => {
@@ -758,6 +783,11 @@ export function MoltenRingCarousel({
         goal = Math.round(goal);
         snapped = true;
       }
+      // On phones the deck stops at its last card - without this the modulo
+      // above keeps handing back a fresh lap forever and the user never
+      // finishes the strip. Applied here rather than at the inputs so a tween
+      // aimed past the end settles on the end instead of overshooting it.
+      if (mobile) goal = clamp(goal, 0, Math.max(0, count - 1));
       progress +=
         (goal - progress) * (reduced ? 1 : snapped ? SNAP_EASE : EASE);
       const speed = Math.abs(goal - progress);
@@ -949,6 +979,7 @@ export function MoltenRingCarousel({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      mobileQuery.removeEventListener("change", syncMobile);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
