@@ -48,7 +48,7 @@ function Root() {
         <HelmetProvider>
           <BrowserRouter>
             <AuthProvider>
-              <ThemeProvider attribute="class" defaultTheme="dark">
+              <ThemeProvider attribute="class" defaultTheme="light">
                 <App />
               </ThemeProvider>
             </AuthProvider>

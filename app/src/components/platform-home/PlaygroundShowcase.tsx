@@ -38,7 +38,7 @@ const playgroundItems: MoltenRingItem[] = [
 // scroll would mean editing the component, which stays verbatim as shipped.
 export default function PlaygroundShowcase() {
   return (
-    <section id="products" className="relative h-screen w-full bg-[#05070d]">
+    <section id="products" className="relative h-screen w-full">
       <MoltenRingCarousel
         items={playgroundItems}
         brand="The Playground"
