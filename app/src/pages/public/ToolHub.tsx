@@ -328,6 +328,7 @@ export default function ToolHub() {
             query={searchQuery}
             category={activeCategory}
             onReset={handleClearFilters}
+            onOpenSubmit={() => setSubmitDialogOpen(true)}
           />
         ) : (
           <>

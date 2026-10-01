@@ -76,19 +76,11 @@ export async function getApprovedCommunityTools(): Promise<ToolItem[]> {
 }
 
 /**
- * Combines static built-in tools (0-latency official registry) with approved community tools.
+ * Fetches all approved public tools directly from Supabase.
  */
 export async function getAllPublicTools(): Promise<ToolItem[]> {
   const communityTools = await getApprovedCommunityTools();
-  if (!communityTools || communityTools.length === 0) {
-    return TOOLS_DATA;
-  }
-
-  // De-duplicate by slug or id
-  const existingIds = new Set(TOOLS_DATA.map((t) => t.id));
-  const newCommunity = communityTools.filter((t) => !existingIds.has(t.id));
-
-  return [...TOOLS_DATA, ...newCommunity];
+  return communityTools || [];
 }
 
 /**
