@@ -4,19 +4,17 @@ import { Clock, Calendar, ChevronRight, ArrowRight, BookOpen } from 'lucide-reac
 import type { BlogPost } from '@/lib/database.types';
 
 export function BrandCoverFallback({
-  title,
-  category,
   aspect = '16/9',
   className = '',
 }: {
-  title: string;
-  category: string;
+  title?: string;
+  category?: string;
   aspect?: '16/9' | 'auto';
   className?: string;
 }) {
   return (
     <div
-      className={`relative w-full overflow-hidden bg-gradient-to-br from-[#120159] via-[#0051C3] to-[#7B7BDC] p-6 flex flex-col justify-between select-none ${
+      className={`relative w-full overflow-hidden bg-gradient-to-br from-[#120159] via-[#0051C3] to-[#7B7BDC] p-6 flex items-center justify-center select-none ${
         aspect === '16/9' ? 'aspect-[16/9]' : ''
       } ${className}`}
     >
@@ -30,19 +28,23 @@ export function BrandCoverFallback({
         }}
       />
 
-      <div className="relative z-10 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold tracking-wider uppercase bg-white/20 text-white backdrop-blur-md border border-white/20">
-          {category}
-        </span>
-        <span className="font-display text-white/50 text-xs tracking-widest">
-          ZYR0
-        </span>
+      {/* Atmospheric radial glow spheres */}
+      <div className="absolute -top-10 -right-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#120159]/40 rounded-full blur-xl pointer-events-none" />
+
+      {/* Abstract architectural brand watermark */}
+      <div className="relative z-10 flex flex-col items-center justify-center text-center">
+        <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-500">
+          <BookOpen className="w-5 h-5 text-white/90" />
+        </div>
+        <div className="mt-2.5 font-mono text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-white/70 font-semibold">
+          ZYR0 // JOURNAL
+        </div>
       </div>
 
-      <div className="relative z-10 mt-auto">
-        <div className="font-heading text-white text-base sm:text-lg font-bold line-clamp-2 leading-snug drop-shadow-sm">
-          {title}
-        </div>
+      {/* Discrete bottom corner coordinate watermark */}
+      <div className="absolute bottom-2.5 right-3 font-mono text-[9px] text-white/30 tracking-wider pointer-events-none">
+        SYS.01
       </div>
     </div>
   );
