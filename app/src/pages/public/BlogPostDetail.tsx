@@ -68,10 +68,11 @@ export default function BlogPostDetail() {
   }, [slug]);
 
   // Extract table of contents items from markdown content
+  const postContent = post?.content;
   const tocItems = useMemo(() => {
-    if (!post?.content) return [];
-    return extractTocFromMarkdown(post.content);
-  }, [post?.content]);
+    if (!postContent) return [];
+    return extractTocFromMarkdown(postContent);
+  }, [postContent]);
 
   const handleCopyLink = async () => {
     try {
