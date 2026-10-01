@@ -959,21 +959,23 @@ function prerenderStaticPages(indexHtml) {
   }
 }
 
-// Extend the sitemap with dynamic, indexable URLs (approved companies + active internships)
+// Extend the sitemap with dynamic, indexable URLs (approved companies, active internships, published blogs)
 // using honest lastmod dates from the database. Listing pages adopt the newest record date.
-function writeEnhancedSitemap(companies, internships) {
+function writeEnhancedSitemap(companies, internships, blogs) {
   const entries = buildStaticSitemapEntries();
 
   const newest = (rows) => {
     if (!rows || rows.length === 0) return '';
-    return isoDate(Math.max(...rows.map((r) => new Date(r.updated_at || r.created_at).getTime())));
+    return isoDate(Math.max(...rows.map((r) => new Date(r.published_at || r.updated_at || r.created_at).getTime())));
   };
   const newestCompany = newest(companies);
   const newestInternship = newest(internships);
+  const newestBlog = newest(blogs);
 
   for (const entry of entries) {
     if (entry.loc === `${SITE_URL}/companies` && newestCompany) entry.lastmod = newestCompany;
     if (entry.loc === `${SITE_URL}/internships` && newestInternship) entry.lastmod = newestInternship;
+    if (entry.loc === `${SITE_URL}/blog` && newestBlog) entry.lastmod = newestBlog;
   }
 
   for (const company of companies || []) {
@@ -986,6 +988,12 @@ function writeEnhancedSitemap(companies, internships) {
     entries.push({
       loc: `${SITE_URL}/internships/${internship.id}`,
       lastmod: isoDate(internship.updated_at || internship.created_at),
+    });
+  }
+  for (const blog of blogs || []) {
+    entries.push({
+      loc: `${SITE_URL}/blog/${blog.slug}`,
+      lastmod: isoDate(blog.published_at || blog.updated_at || blog.created_at),
     });
   }
 
@@ -1158,8 +1166,82 @@ async function prerenderDynamicPages(indexHtml) {
         fs.writeFileSync(path.join(routeDir, 'index.html'), pageHtml, 'utf-8');
       }
 
+    let blogs = [];
+    console.log('[SEO Prerender] Fetching published blogs from Supabase...');
+    try {
+      blogs = await supabaseQuery('blogs', {
+        select: 'slug,title,excerpt,cover_image,author_name,published_at,updated_at,created_at,category',
+        is_published: 'eq.true',
+      });
+      console.log(`[SEO Prerender] Pre-rendering ${blogs.length} published blog dispatches...`);
+    } catch (err) {
+      console.error('[SEO Prerender] Error fetching blogs:', err.message);
+    }
+
+    for (const blog of blogs) {
+      const slug = blog.slug;
+      const pagePath = `blog/${slug}`;
+      const canonicalUrl = `${SITE_URL}/${pagePath}`;
+      const title = `${blog.title} — ZYR0 Journal`;
+      const description = blog.excerpt || `Read ${blog.title} on the ZYR0 Journal.`;
+      const keywords = `${blog.category}, engineering, architecture, ZYR0 journal, tech blog`;
+
+      const blogStructuredData = [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: blog.title,
+          description: blog.excerpt,
+          image: blog.cover_image || undefined,
+          author: {
+            '@type': 'Person',
+            name: blog.author_name || 'ZYR0 Team',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'ZYR0',
+            logo: {
+              '@type': 'ImageObject',
+              url: `${SITE_URL}/zyro-logo.png`,
+            },
+          },
+          datePublished: blog.published_at || blog.created_at,
+          dateModified: blog.updated_at || blog.published_at || blog.created_at,
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': canonicalUrl,
+          },
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+            { '@type': 'ListItem', position: 2, name: 'Journal', item: `${SITE_URL}/blog` },
+            { '@type': 'ListItem', position: 3, name: blog.title, item: canonicalUrl },
+          ],
+        },
+      ];
+
+      const meta = {
+        title,
+        description,
+        keywords,
+        canonicalUrl,
+        image: blog.cover_image || undefined,
+        structuredData: blogStructuredData,
+        path: 'blog_detail',
+        data: { blog },
+      };
+
+      const pageHtml = renderTemplate(indexHtml, meta);
+      const routeDir = path.join(distDir, 'blog', slug);
+      fs.mkdirSync(routeDir, { recursive: true });
+      fs.writeFileSync(path.join(routeDir, 'index.html'), pageHtml, 'utf-8');
+    }
+
     // Append dynamic URLs to the sitemap now that real data is available
-    writeEnhancedSitemap(companies, internships);
+    writeEnhancedSitemap(companies, internships, blogs);
 
   } catch (err) {
     console.error('[SEO Prerender] Dynamic pre-rendering failed:', err);

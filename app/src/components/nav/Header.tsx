@@ -17,10 +17,17 @@ const productLogos: Record<string, string> = {
   research: '/logos/research.png',
 };
 
-const resources = [
+interface HeaderResourceItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: string;
+}
+
+const resources: HeaderResourceItem[] = [
   { label: 'Help Center', href: '/help', icon: HelpCircle },
   { label: 'FAQ', href: '/faq', icon: MessageCircle },
-  { label: 'Blog', href: '/blog', icon: BookOpen, badge: 'Soon' },
+  { label: 'Blog', href: '/blog', icon: BookOpen },
   { label: 'Verify Certificate', href: '/verify', icon: BadgeCheck },
   { label: 'Privacy Policy', href: '/privacy', icon: Shield },
   { label: 'Terms of Service', href: '/terms', icon: FileText },

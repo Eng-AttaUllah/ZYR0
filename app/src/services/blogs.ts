@@ -117,6 +117,51 @@ export async function getRelatedBlogs(category: string, currentSlug: string, lim
 }
 
 /**
+ * Fetch chronological previous and next published posts for navigation.
+ */
+export async function getAdjacentBlogs(
+  publishedAt: string | null,
+  currentSlug: string
+): Promise<{ prev: BlogPost | null; next: BlogPost | null }> {
+  if (!publishedAt) {
+    return { prev: null, next: null };
+  }
+
+  try {
+    const [prevRes, nextRes] = await Promise.all([
+      // Previous older post
+      supabase
+        .from('blogs')
+        .select('*')
+        .eq('is_published', true)
+        .lt('published_at', publishedAt)
+        .neq('slug', currentSlug)
+        .order('published_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // Next newer post
+      supabase
+        .from('blogs')
+        .select('*')
+        .eq('is_published', true)
+        .gt('published_at', publishedAt)
+        .neq('slug', currentSlug)
+        .order('published_at', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    return {
+      prev: (prevRes.data as BlogPost) ?? null,
+      next: (nextRes.data as BlogPost) ?? null,
+    };
+  } catch (err) {
+    console.error('Failed to fetch adjacent blogs:', err);
+    return { prev: null, next: null };
+  }
+}
+
+/**
  * ADMIN: Get all posts including drafts and unlisted.
  */
 export async function getAllBlogsAdmin(): Promise<BlogPost[]> {
@@ -197,4 +242,28 @@ export async function deleteBlogAdmin(id: string): Promise<void> {
     .eq('id', id);
 
   if (error) throw error;
+}
+
+/**
+ * ADMIN: Upload a blog cover image to Supabase Storage (company-assets public bucket).
+ */
+export async function uploadBlogCoverImage(file: File): Promise<string> {
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+  const filePath = `blog-covers/${Date.now()}_${cleanName}.${fileExt}`;
+
+  const { error } = await supabase.storage
+    .from('company-assets')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from('company-assets')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
 }

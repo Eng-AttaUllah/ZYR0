@@ -188,12 +188,12 @@ export const footerNav = {
   resources: [
     { label: 'Help Center', href: '/help' },
     { label: 'FAQ', href: '/faq' },
-    { label: 'Blog', href: '/blog', badge: 'Soon' },
+    { label: 'Blog', href: '/blog' },
     { label: 'Verify Certificate', href: '/verify' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Service', href: '/terms' },
     { label: 'Cookie Policy', href: '/cookies' },
-  ],
+  ] as Array<{ label: string; href: string; badge?: string }>,
   company: [
     { label: 'About', href: '/about' },
     { label: 'Contact', href: '/contact' },
