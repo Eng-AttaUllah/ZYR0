@@ -74,6 +74,7 @@ const pages = [
   { path: 'help', lastmod: '2026-08-06' },
   { path: 'verify', lastmod: '2026-08-06' },
   { path: 'blog', lastmod: '2026-09-19' },
+  { path: 'tools', lastmod: '2026-10-01' },
   { path: 'privacy', lastmod: '2026-07-18' },
   { path: 'terms', lastmod: '2026-07-18' },
   { path: 'cookies', lastmod: '2026-07-18' }
@@ -433,6 +434,21 @@ const staticPagesMeta = {
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: `${url}/` },
           { '@type': 'ListItem', position: 2, name: 'Cookie Policy', item: `${url}/cookies` }
+        ],
+      }
+    ]
+  },
+  'tools': {
+    title: 'ToolHub — Curated AI, Developer & Research Tools | ZYR0',
+    description: 'Discover intelligent tools, developer utilities, and agent workflows curated from ZYR0, GitHub, and Hugging Face.',
+    keywords: 'AI tools, developer utilities, autonomous agents, code intelligence, open source tools, hugging face, github tools, ZYR0 ToolHub',
+    structuredData: (url) => [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${url}/` },
+          { '@type': 'ListItem', position: 2, name: 'ToolHub', item: `${url}/tools` }
         ],
       }
     ]
