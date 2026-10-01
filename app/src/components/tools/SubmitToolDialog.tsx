@@ -42,6 +42,12 @@ export function SubmitToolDialog({ open, onOpenChange, onSuccess }: SubmitToolDi
   const [authorName, setAuthorName] = useState(profile?.full_name || '');
   const [authorUrl, setAuthorUrl] = useState(profile?.github || profile?.portfolio_url || '');
 
+  // Admin controls
+  const isAdmin = profile?.role === 'admin';
+  const [adminStatus, setAdminStatus] = useState<'approved' | 'pending'>('approved');
+  const [adminFeatured, setAdminFeatured] = useState(false);
+  const [adminBadge, setAdminBadge] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
 
@@ -60,6 +66,9 @@ export function SubmitToolDialog({ open, onOpenChange, onSuccess }: SubmitToolDi
     setTagsInput('');
     setCapabilitiesInput('');
     setVersion('');
+    setAdminStatus('approved');
+    setAdminFeatured(false);
+    setAdminBadge('');
     setSubmittedSuccess(false);
   };
 
@@ -105,11 +114,22 @@ export function SubmitToolDialog({ open, onOpenChange, onSuccess }: SubmitToolDi
         version: version || undefined,
         author_name: authorName || profile?.full_name || 'Community Builder',
         author_url: authorUrl || undefined,
+        ...(isAdmin
+          ? {
+              status: adminStatus,
+              featured: adminFeatured,
+              badge: adminBadge || undefined,
+            }
+          : {}),
       };
 
       await submitTool(input, user.id);
       setSubmittedSuccess(true);
-      toast.success('Your submission has been received and queued for moderation!');
+      if (isAdmin && adminStatus === 'approved') {
+        toast.success('Tool has been created and published live directly!');
+      } else {
+        toast.success('Your submission has been received and queued for moderation!');
+      }
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('Submission error:', err);
@@ -198,9 +218,13 @@ export function SubmitToolDialog({ open, onOpenChange, onSuccess }: SubmitToolDi
         ) : submittedSuccess ? (
           <div className="py-8 text-center space-y-4">
             <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto" />
-            <h3 className="text-xl font-bold text-foreground">Submission Queued!</h3>
+            <h3 className="text-xl font-bold text-foreground">
+              {isAdmin && adminStatus === 'approved' ? 'Tool Published Live!' : 'Submission Queued!'}
+            </h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Thank you for contributing! Your tool is now in the verification queue. Once approved by ZYR0 moderators, it will automatically appear live in the ToolHub catalog.
+              {isAdmin && adminStatus === 'approved'
+                ? 'Your tool or skill is now live in the ToolHub catalog. Developers and researchers can discover, inspect, and install it immediately.'
+                : 'Thank you for contributing! Your tool is now in the verification queue. Once approved by ZYR0 moderators, it will automatically appear live in the ToolHub catalog.'}
             </p>
             <div className="flex justify-center gap-3 pt-4">
               <Button
@@ -435,6 +459,81 @@ export function SubmitToolDialog({ open, onOpenChange, onSuccess }: SubmitToolDi
                 className="w-full px-3.5 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-accent text-foreground"
               />
             </div>
+
+            {/* Admin Publishing Controls (Only visible to Administrators) */}
+            {isAdmin && (
+              <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                    Administrator Publishing Powers
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Publication Mode */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Publication Status
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAdminStatus('approved')}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
+                          adminStatus === 'approved'
+                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold'
+                            : 'border-border/70 bg-card text-muted-foreground hover:bg-muted/40'
+                        }`}
+                      >
+                        Publish Live
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminStatus('pending')}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
+                          adminStatus === 'pending'
+                            ? 'border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold'
+                            : 'border-border/70 bg-card text-muted-foreground hover:bg-muted/40'
+                        }`}
+                      >
+                        Save as Pending
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Custom Badge */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Custom Badge (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Official, Staff Pick, Verified"
+                      value={adminBadge}
+                      onChange={(e) => setAdminBadge(e.target.value)}
+                      className="w-full px-3 py-2 bg-card border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-accent text-foreground"
+                    />
+                  </div>
+                </div>
+
+                {/* Featured Switch */}
+                <label className="flex items-center gap-3 pt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={adminFeatured}
+                    onChange={(e) => setAdminFeatured(e.target.checked)}
+                    className="w-4 h-4 rounded border-border text-blue-600 focus:ring-blue-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-foreground">Featured Flagship Tool</span>
+                    <span className="text-muted-foreground ml-1.5">
+                      (Pin to the top curated showcase section on /tools)
+                    </span>
+                  </div>
+                </label>
+              </div>
+            )}
 
             {/* Modal Actions */}
             <div className="pt-4 border-t border-border flex items-center justify-end gap-3">

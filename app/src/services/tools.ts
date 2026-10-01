@@ -19,6 +19,9 @@ export interface SubmitToolInput {
   version?: string;
   author_name: string;
   author_url?: string;
+  status?: ToolSubmissionStatus;
+  featured?: boolean;
+  badge?: string;
 }
 
 /**
@@ -111,9 +114,10 @@ export async function submitTool(input: SubmitToolInput, ownerId: string): Promi
     version: input.version?.trim() || null,
     author_name: input.author_name.trim(),
     author_url: input.author_url?.trim() || null,
-    status: 'pending',
+    status: input.status || 'pending',
     owner_id: ownerId,
-    featured: false,
+    featured: input.featured ?? false,
+    badge: input.badge?.trim() || null,
   };
 
   const { data, error } = await supabase

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Wrench, CheckCircle2, XCircle, Clock, Star, ExternalLink,
-  Search, ShieldAlert, Sparkles, AlertCircle, Trash2, Edit3, Eye
+  Search, ShieldAlert, Sparkles, AlertCircle, Trash2, Edit3, Eye, Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import {
   mapDbToolToToolItem,
 } from '@/services/tools';
 import { ToolPreviewDialog } from '@/components/tools/ToolPreviewDialog';
+import { SubmitToolDialog } from '@/components/tools/SubmitToolDialog';
 import type { DbTool, ToolSubmissionStatus } from '@/lib/database.types';
 import type { ToolItem } from '@/data/tools';
 import { toast } from 'sonner';
@@ -25,6 +26,7 @@ export default function AdminTools() {
   // Moderation state
   const [previewItem, setPreviewItem] = useState<ToolItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<DbTool | null>(null);
   const [moderatorNote, setModeratorNote] = useState('');
@@ -154,6 +156,15 @@ export default function AdminTools() {
               className="w-full pl-9 pr-3.5 py-1.5 bg-muted/40 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-accent text-foreground"
             />
           </div>
+          <Button
+            size="sm"
+            onClick={() => setCreateModalOpen(true)}
+            className="gap-1.5 shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Tool / Skill</span>
+          </Button>
+
           <Button asChild variant="outline" size="sm" className="gap-1.5 shrink-0">
             <a href="/tools" target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-4 h-4" />
@@ -392,6 +403,15 @@ export default function AdminTools() {
         tool={previewItem}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+      />
+
+      {/* Admin Add Tool / Skill Dialog */}
+      <SubmitToolDialog
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={() => {
+          loadAdminTools();
+        }}
       />
     </div>
   );
