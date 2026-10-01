@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HelpCircle, FileText, BookOpen, MessageCircle, Shield, BadgeCheck, Cookie, ChevronRight } from 'lucide-react';
+import { HelpCircle, FileText, BookOpen, MessageCircle, Shield, BadgeCheck, Cookie, ChevronRight, Compass } from 'lucide-react';
 
 interface ResourceItem {
   label: string;
@@ -11,6 +11,7 @@ interface ResourceItem {
 }
 
 const resources: ResourceItem[] = [
+  { label: 'ToolHub', href: '/tools', icon: Compass, badge: 'New' },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
   { label: 'FAQ', href: '/faq', icon: MessageCircle },
   { label: 'Verify Certificate', href: '/verify', icon: BadgeCheck },

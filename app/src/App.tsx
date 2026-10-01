@@ -53,6 +53,9 @@ const ResearchLanding = lazy(() => import('@/pages/research/ResearchLanding'));
 const BlogHome = lazy(() => import('@/pages/public/BlogHome'));
 const BlogPostDetail = lazy(() => import('@/pages/public/BlogPostDetail'));
 
+// ZYR0 ToolHub Discovery Page
+const ToolHub = lazy(() => import('@/pages/public/ToolHub'));
+
 // ZYR0 Work / Internship Public Pages
 const Landing = lazy(() => import('@/pages/public/Landing'));
 const BrowseInternships = lazy(() => import('@/pages/public/BrowseInternships'));
@@ -293,6 +296,8 @@ export default function App() {
               <Route path="/careers/apply" element={<TeamApply />} />
               <Route path="/blog" element={<BlogHome />} />
               <Route path="/blog/:slug" element={<BlogPostDetail />} />
+              <Route path="/tools" element={<ToolHub />} />
+              <Route path="/toolhub" element={<Navigate to="/tools" replace />} />
             </Route>
 
             {/* Auth Routes */}
