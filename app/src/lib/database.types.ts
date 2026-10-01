@@ -433,6 +433,37 @@ export interface BlogPost {
   updated_at: string;
 }
 
+export type ToolSubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DbTool {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  description: string;
+  item_type: 'tool' | 'skill' | 'tool_skill';
+  category: 'AI & Agents' | 'Developer Tools' | 'Research & Docs' | 'Productivity';
+  tags: string[];
+  source: string;
+  source_url: string;
+  documentation_url: string | null;
+  image_url: string | null;
+  badge: string | null;
+  featured: boolean;
+  capabilities: string[];
+  install_command: string | null;
+  install_instructions: string | null;
+  version: string | null;
+  author_name: string;
+  author_url: string | null;
+  status: ToolSubmissionStatus;
+  owner_id: string | null;
+  moderator_note: string | null;
+  created_at: string;
+  updated_at: string;
+  owner?: Profile | null;
+}
+
 // Supabase Database type (for createClient<Database>)
 export interface Database {
   public: {
@@ -456,6 +487,7 @@ export interface Database {
       workspace_events: { Row: WorkspaceEvent; Insert: Partial<WorkspaceEvent>; Update: Partial<WorkspaceEvent> };
       contact_messages: { Row: ContactMessage; Insert: Partial<ContactMessage>; Update: Partial<ContactMessage> };
       blogs: { Row: BlogPost; Insert: Partial<BlogPost>; Update: Partial<BlogPost> };
+      tools: { Row: DbTool; Insert: Partial<DbTool>; Update: Partial<DbTool> };
     };
     Views: {
       [_ in never]: never
