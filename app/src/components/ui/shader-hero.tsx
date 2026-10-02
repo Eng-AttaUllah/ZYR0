@@ -37,11 +37,21 @@ export const ShaderHero = () => {
       />
 
       {/* Main 2-column container: Content on the Left, 3D Line Art on the Right */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-28 pb-16 md:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-20 sm:pt-24 lg:pt-28 pb-10 sm:pb-14 md:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center">
           
-          {/* Left Column: ZYR0 Content & Actions */}
-          <div className="lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left">
+          {/* 3D Cycling Line Art — on Mobile: Top (order-1); on Desktop: Right (order-2) */}
+          <m.div
+            initial={{ opacity: 0, scale: 0.92, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="order-1 lg:order-2 lg:col-span-6 flex justify-center lg:justify-end items-center w-full lg:translate-x-6 xl:translate-x-10 mb-2 lg:mb-0"
+          >
+            <HeroLineArtCycle intervalMs={4000} />
+          </m.div>
+
+          {/* ZYR0 Content & Actions — on Mobile: Below shapes (order-2); on Desktop: Left (order-1) */}
+          <div className="order-2 lg:order-1 lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left">
             {/* Badge */}
             <m.div
               initial={{ opacity: 0, y: -16, scale: 0.96 }}
@@ -156,7 +166,7 @@ export const ShaderHero = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.15, duration: 0.7 }}
-              className="mt-12 md:mt-14 pt-5 border-t w-full max-w-lg"
+              className="mt-8 md:mt-14 pt-4 md:pt-5 border-t w-full max-w-lg"
               style={{ borderColor: 'var(--zyro-border)' }}
             >
               <p
@@ -167,16 +177,6 @@ export const ShaderHero = () => {
               </p>
             </m.div>
           </div>
-
-          {/* Right Column: Interactive 3D Cycling Line Art — shifted slightly right and unboxed */}
-          <m.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.45, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-6 flex justify-center lg:justify-end items-center w-full lg:translate-x-6 xl:translate-x-10"
-          >
-            <HeroLineArtCycle intervalMs={4000} />
-          </m.div>
 
         </div>
       </div>

@@ -69,16 +69,34 @@ export function HeroLineArtCycle({
         }}
       />
 
-      {/* Pure, Unboxed Floating 3D Line Art Stage */}
-      <div className="relative aspect-square w-full max-w-[440px] sm:max-w-[520px] md:max-w-[580px] lg:max-w-[650px] xl:max-w-[720px] flex items-center justify-center">
-        <AnimatePresence mode="wait">
+      {/* Pure, Unboxed Floating 3D Line Art Stage — compact on mobile, expansive on desktop */}
+      <div className="relative aspect-square w-full max-w-[190px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[420px] lg:max-w-[650px] xl:max-w-[720px] flex items-center justify-center">
+        <AnimatePresence>
           <m.div
             key={current.name}
-            initial={{ opacity: 0, scale: 0.9, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.06, filter: 'blur(6px)' }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 h-full w-full"
+            initial={{
+              opacity: 0,
+              scale: 0.82,
+              filter: 'blur(8px)',
+              rotate: -8,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              filter: 'blur(0px)',
+              rotate: 0,
+            }}
+            exit={{
+              opacity: 0,
+              scale: 1.18,
+              filter: 'blur(10px)',
+              rotate: 8,
+            }}
+            transition={{
+              duration: 1.1,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="absolute inset-0 h-full w-full will-change-transform"
           >
             <LineArtCanvas
               shape={current.name}
