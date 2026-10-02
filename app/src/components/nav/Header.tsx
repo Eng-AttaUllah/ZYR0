@@ -46,12 +46,10 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [islandOpen, setIslandOpen] = useState(false);
 
   const productsRef = useRef<HTMLDivElement>(null);
   const resourcesRef = useRef<HTMLDivElement>(null);
   const companyRef = useRef<HTMLDivElement>(null);
-  const islandRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -59,11 +57,7 @@ export default function Header() {
 
   useEffect(() => {
     const onScroll = () => {
-      const isPast = window.scrollY > 80;
-      setScrolled(isPast);
-      if (!isPast) {
-        setIslandOpen(false);
-      }
+      setScrolled(window.scrollY > 40);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -81,9 +75,6 @@ export default function Header() {
       if (companyRef.current && !companyRef.current.contains(target)) {
         setCompanyOpen(false);
       }
-      if (islandRef.current && !islandRef.current.contains(target)) {
-        setIslandOpen(false);
-      }
     };
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
@@ -96,7 +87,6 @@ export default function Header() {
     setMobileOpen(false);
     setMobileSection(null);
     setProfileOpen(false);
-    setIslandOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -161,26 +151,21 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Desktop/Tablet Header: Morphing Dynamic Island on scroll */}
-      <div className="hidden md:block">
-        <AnimatePresence mode="wait">
-          {!scrolled ? (
-            /* Full-width desktop navbar at the top */
-            <m.div
-              key="desktop-full-navbar"
-              initial={{ opacity: 0, y: -20, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pointer-events-auto"
-            >
-              <div className="rounded-2xl transition-all duration-300 border bg-black/50 dark:bg-black/40 backdrop-blur-md border-white/10 py-3.5 px-5 sm:px-6 flex items-center justify-between">
-                {/* Logo */}
-                <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-                  <span className="text-xl font-display tracking-tight text-white">
-                    ZYR0
-                  </span>
-                </Link>
+      {/* Desktop/Tablet Header: Consistent Full-Width Navbar */}
+      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pointer-events-auto">
+        <div
+          className={`rounded-2xl transition-all duration-300 border ${
+            scrolled
+              ? 'bg-black/85 dark:bg-black/85 backdrop-blur-xl border-white/15 shadow-2xl shadow-black/80 py-3 px-5 sm:px-6'
+              : 'bg-black/50 dark:bg-black/40 backdrop-blur-md border-white/10 py-3.5 px-5 sm:px-6'
+          } flex items-center justify-between`}
+        >
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+            <span className="text-xl font-display tracking-tight text-white">
+              ZYR0
+            </span>
+          </Link>
 
                 {/* Desktop Nav */}
                 <nav className="flex items-center gap-1">
@@ -453,209 +438,7 @@ export default function Header() {
                   )}
                 </div>
               </div>
-            </m.div>
-          ) : (
-            /* Converged Dynamic Island Capsule / Morphing Menu */
-            <m.div
-              key="desktop-dynamic-island-wrapper"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="fixed top-4 inset-x-0 flex justify-center z-50 pointer-events-none"
-            >
-              <div
-                ref={islandRef}
-                className="pointer-events-auto flex justify-center"
-              >
-                <AnimatePresence mode="wait">
-                {!islandOpen ? (
-                  /* Floating Sleek Capsule */
-                  <m.button
-                    key="island-capsule"
-                    type="button"
-                    onClick={() => setIslandOpen(true)}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-                    className="group relative flex items-center gap-3 px-4 py-2 rounded-full bg-neutral-950/85 hover:bg-neutral-900/95 text-white backdrop-blur-2xl border border-white/15 shadow-2xl shadow-black/80 hover:border-white/30 transition-all cursor-pointer"
-                    aria-label="Open navigation menu"
-                  >
-                    {/* Top ambient gloss line */}
-                    <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-accent-400/50 to-transparent" />
-
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-accent-500/30 to-purple-500/30 border border-white/20 flex items-center justify-center text-accent-300">
-                        <Sparkles className="w-2.5 h-2.5" />
-                      </div>
-                      <span className="font-display text-sm tracking-tight text-white font-semibold">ZYR0</span>
-                    </div>
-
-                    <div className="w-px h-3.5 bg-white/20" />
-
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-300 group-hover:text-white transition-colors">
-                      <span>Menu</span>
-                      <MenuIcon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white transition-colors" />
-                    </div>
-                  </m.button>
-                ) : (
-                  /* Morphing Dropdown Island Card */
-                  <m.div
-                    key="island-expanded-card"
-                    initial={{ opacity: 0, y: -10, scale: 0.92 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.92 }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-                    className="w-[380px] sm:w-[480px] max-w-[92vw] rounded-3xl bg-neutral-950/95 backdrop-blur-2xl border border-white/15 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.9)] p-4 overflow-hidden relative"
-                  >
-                    {/* Subtle top edge shine */}
-                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-400/50 to-transparent" />
-
-                    {/* Island Top Bar */}
-                    <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                      <Link to="/" onClick={() => setIslandOpen(false)} className="flex items-center gap-2">
-                        <span className="font-display font-bold text-base text-white tracking-tight">ZYR0</span>
-                        <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-accent-400/10 text-accent-300 border border-accent-400/20">
-                          Platform
-                        </span>
-                      </Link>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
-                          aria-label="Toggle theme"
-                        >
-                          {mounted && theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => setIslandOpen(false)}
-                          className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
-                          aria-label="Close menu"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Products Grid */}
-                    <div className="py-3">
-                      <div className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 mb-2 px-1">
-                        Products
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {productsList.slice(0, 6).map((prod) => (
-                          <Link
-                            key={prod.id}
-                            to={prod.href}
-                            onClick={() => setIslandOpen(false)}
-                            className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all group"
-                          >
-                            <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
-                              {productLogos[prod.id] ? (
-                                <img src={productLogos[prod.id]} alt={prod.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-xs font-bold text-white">{prod.name.charAt(4)}</span>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs font-semibold text-white group-hover:text-accent-400 transition-colors truncate">
-                                {prod.name}
-                              </div>
-                              <div className="text-[10px] text-neutral-400 truncate">
-                                {prod.badge || 'Platform OS'}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Quick Nav Links */}
-                    <div className="py-2.5 border-t border-white/10 grid grid-cols-3 gap-2 text-center">
-                      <button
-                        onClick={() => { setIslandOpen(false); scrollTo('#pricing'); }}
-                        className="py-1.5 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 text-xs font-medium text-neutral-300 hover:text-white transition-all"
-                      >
-                        Pricing
-                      </button>
-                      <Link
-                        to="/help"
-                        onClick={() => setIslandOpen(false)}
-                        className="py-1.5 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 text-xs font-medium text-neutral-300 hover:text-white transition-all"
-                      >
-                        Help Center
-                      </Link>
-                      <Link
-                        to="/about"
-                        onClick={() => setIslandOpen(false)}
-                        className="py-1.5 px-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 text-xs font-medium text-neutral-300 hover:text-white transition-all"
-                      >
-                        About
-                      </Link>
-                    </div>
-
-                    {/* Auth / Account Controls */}
-                    <div className="pt-2.5 border-t border-white/10">
-                      {user ? (
-                        <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white/[0.03]">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <img
-                              src={user.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User'}
-                              alt=""
-                              className="w-7 h-7 rounded-full object-cover shrink-0"
-                            />
-                            <span className="text-xs font-medium text-white truncate">
-                              {user.user_metadata?.full_name?.split(' ')[0] || 'User'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {effectiveRole && (
-                              <button
-                                onClick={() => { setIslandOpen(false); navigate(`/${effectiveRole}/dashboard`); }}
-                                className="px-2.5 py-1 text-xs font-medium bg-white text-black hover:bg-neutral-200 rounded-lg transition-colors"
-                              >
-                                Dashboard
-                              </button>
-                            )}
-                            <button
-                              onClick={async () => { await signOut(); setIslandOpen(false); navigate('/'); }}
-                              className="p-1 text-neutral-400 hover:text-red-400 rounded-lg transition-colors"
-                              title="Sign out"
-                            >
-                              <LogOut className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
-                            onClick={() => setIslandOpen(false)}
-                            className="flex-1 py-2 text-center text-xs font-medium text-neutral-300 hover:text-white border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
-                          >
-                            Sign In
-                          </Link>
-                          <Link
-                            to={`/register?redirect=${encodeURIComponent(location.pathname)}`}
-                            onClick={() => setIslandOpen(false)}
-                            className="flex-1 py-2 text-center text-xs font-semibold text-black bg-white hover:bg-neutral-200 rounded-xl transition-colors shadow-md shadow-white/10"
-                          >
-                            Get Started
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </m.div>
-                )}
-              </AnimatePresence>
-              </div>
-            </m.div>
-          )}
-        </AnimatePresence>
-      </div>
+            </div>
 
       {/* Mobile Drawer */}
       {mobileOpen && (
