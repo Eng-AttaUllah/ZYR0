@@ -73,9 +73,10 @@ type Month = keyof typeof monthOrder;
 
 type JourneyItem = {
   id: string;
-  year: string;
-  month: Month;
-  content: string;
+  tag: string;
+  headline: string;
+  body: string;
+  badge: string;
 };
 
 type SplitTextInstance = InstanceType<typeof SplitText>;
@@ -124,62 +125,48 @@ function usePrefersReducedMotion() {
   );
 }
 
-// ponytail: journey data hardcoded in-component; hoist to props/data module when a second timeline appears
+// 4 Defensible Pillars - 2 top track, 2 bottom track
 const topJourneyData: JourneyItem[] = [
   {
-    id: '2020-march',
-    year: '2020',
-    month: 'March',
-    content: 'Signal research consolidates scattered ideas into one ecosystem thesis',
+    id: 'code-sovereignty',
+    tag: 'PORTABILITY & COMPILATION',
+    headline: 'Clean ASTs. Zero proprietary runtime shims.',
+    body: 'Applications scaffolded in ZYR0 compile directly into idiomatic React 19, TypeScript, and standard Tailwind CSS. There are no proprietary intermediary SDKs, hidden framework hooks, or forced container hosting. Export clean Git repositories or connect existing CI/CD pipelines in a single command.',
+    badge: 'Standard Node.js / Vite Toolchain • 100% Self-Hostable Output',
   },
   {
-    id: '2021-july',
-    year: '2021',
-    month: 'July',
-    content: 'Founding release ships ZYR0 Studio with the first live customer journeys',
-  },
-  {
-    id: '2023-april',
-    year: '2023',
-    month: 'April',
-    content: 'School OS connects institutions, fee billing, and verifiable credentials',
-  },
-  {
-    id: '2026-may',
-    year: '2026',
-    month: 'May',
-    content: 'Open skills marketplace opens the network to community builders',
+    id: 'proof-of-work',
+    tag: 'PROOF OF WORK',
+    headline: 'Hands-on mentorship, real code reviews, proof of skill.',
+    body: 'ZYR0 Work connects students and engineers with practical, paid industry opportunities. You work through structured project milestones, receive direct 1-on-1 code reviews from senior mentors, and graduate with verified portfolio proof that hiring teams actually take seriously.',
+    badge: '1-on-1 Mentor Guidance • Thorough Code Reviews • Verified Outcomes',
   },
 ];
 
 const bottomJourneyData: JourneyItem[] = [
   {
-    id: '2020-november',
-    year: '2020',
-    month: 'November',
-    content: 'Prototype sprint validates multi-tenant architecture with real operators',
+    id: 'auditable-intelligence',
+    tag: 'EPISTEMIC RIGOR',
+    headline: 'Verifiable citation graphs over ungrounded generation.',
+    body: 'Autonomous agents in ZYR0 Research do not hallucinate inside an opaque black box. Every claim is resolved against authoritative web indices with verifiable source attribution, immutable provenance links, and step-by-step reasoning logs. What is generated can be independently audited down to the exact URL and timestamp.',
+    badge: 'Cryptographic Trace Logs • Zero Untraced Assertions',
   },
   {
-    id: '2022-october',
-    year: '2022',
-    month: 'October',
-    content: 'Cryptographic verification layer signs every credential and milestone',
-  },
-  {
-    id: '2025-september',
-    year: '2025',
-    month: 'September',
-    content: 'Research Agent ships autonomous literature synthesis to production',
+    id: 'data-portability',
+    tag: 'GOVERNANCE & PRIVACY',
+    headline: 'Tenant-isolated data models. Open schema exports.',
+    body: 'Whether orchestrating institutional operations in School OS or training domain workflows, your data remains logically isolated in strict multi-tenant boundaries. Zero proprietary schema lock-in: extract your institutional records, telemetry, and relational models into open CSV, JSON, or standard relational formats at any point without administrative friction.',
+    badge: 'Strict RBAC Enforcement • Zero Proprietary Formats',
   },
 ];
 
-const allJourneyItems: JourneyItem[] = [...topJourneyData, ...bottomJourneyData].sort(
-  (a, b) => {
-    const yearDiff = Number(a.year) - Number(b.year);
-    if (yearDiff !== 0) return yearDiff;
-    return monthOrder[a.month] - monthOrder[b.month];
-  },
-);
+// In order of horizontal appearance along the track (alternating top and bottom)
+const allJourneyItems: JourneyItem[] = [
+  topJourneyData[0],
+  bottomJourneyData[0],
+  topJourneyData[1],
+  bottomJourneyData[1],
+];
 
 export default function Timeline({
   title = 'Product Storyline',
@@ -216,38 +203,49 @@ export default function Timeline({
       if (!section) return;
 
       const isMobile = window.innerWidth < 600;
-      const slidePercent = isMobile ? -57 : -65;
-      const lineWidth = isMobile ? '65%' : '98%';
-      const lineStart = isMobile ? 'top 30%' : 'top 25%';
-      const slideEnd = isMobile ? '82% 50%' : '92% bottom';
-      const lineEnd = isMobile ? '80% 50%' : '92% bottom';
+      const lastCardContainer = document.querySelector('.card-data-portability');
+      let targetX = 0;
+
+      if (lastCardContainer && wholeSliderRef.current) {
+        const sliderRect = wholeSliderRef.current.getBoundingClientRect();
+        const cardRect = lastCardContainer.getBoundingClientRect();
+        // card center relative to slider start
+        const cardCenterInSlider = (cardRect.left - sliderRect.left) + cardRect.width / 2;
+        // target scroll: place card center at viewport center
+        targetX = -(cardCenterInSlider - window.innerWidth / 2);
+      }
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
           start: 'top top',
-          end: slideEnd,
+          end: '96% bottom',
           scrub: true,
+          invalidateOnRefresh: true,
         },
         defaults: {
           ease: 'none',
         },
       });
 
-      tl.fromTo(wholeSliderRef.current, { xPercent: 0 }, { xPercent: slidePercent });
+      if (targetX !== 0) {
+        tl.to(wholeSliderRef.current, { x: targetX });
+      } else {
+        tl.to(wholeSliderRef.current, { xPercent: isMobile ? -80 : -70 });
+      }
 
       if (reducedMotion) {
-        gsap.set('.journey-line', { width: lineWidth });
+        gsap.set('.journey-line', { width: '100%' });
         return;
       }
 
       gsap.to('.journey-line', {
-        width: lineWidth,
+        width: '100%',
         ease: 'none',
         scrollTrigger: {
           trigger: section,
-          start: lineStart,
-          end: lineEnd,
+          start: isMobile ? 'top 30%' : 'top 25%',
+          end: '96% bottom',
           scrub: true,
         },
       });
@@ -274,9 +272,10 @@ export default function Timeline({
       }
 
       items.forEach((item) => {
+        const isTop = topJourneyData.some((topItem) => topItem.id === item.id);
         gsap.set(`.jl-${item.id}`, {
           scaleY: 0,
-          transformOrigin: 'bottom bottom',
+          transformOrigin: isTop ? 'bottom bottom' : 'top top',
         });
         gsap.set(`.jd-${item.id}`, { scale: 0 });
         gsap.set(`.title-${item.id}`, { opacity: 1 });
@@ -361,22 +360,16 @@ export default function Timeline({
       const positions: ReadonlyArray<readonly [number, number]> =
         window.innerWidth < 600
           ? [
-              [22, 32],
-              [28, 38],
-              [36, 46],
-              [45, 55],
-              [52, 62],
-              [60, 70],
-              [69, 79],
+              [8, 26],
+              [24, 44],
+              [42, 62],
+              [60, 84],
             ]
           : [
-              [6, 26],
-              [16, 36],
-              [26, 46],
-              [35, 55],
-              [45, 65],
-              [55, 75],
-              [65, 85],
+              [5, 24],
+              [22, 42],
+              [40, 60],
+              [58, 82],
             ];
 
       items.forEach((item, index) => {
@@ -406,10 +399,10 @@ export default function Timeline({
       className="h-[200vw] max-[600px]:h-[400vh] w-full relative"
       style={sectionStyle}
     >
-      <div className="h-screen w-screen sticky top-0 pt-[10%] overflow-hidden max-[600px]:pt-[24vh]">
+      <div className="h-screen w-screen sticky top-0 pt-[10%] overflow-hidden max-[600px]:pt-[12vh]">
         <div
           ref={wholeSliderRef}
-          className="mr-[2vw] flex h-[30vw] w-[240vw] items-center gap-[5vw] px-[5vw] max-[600px]:h-[60vh] max-[600px]:w-[800vw] max-[600px]:px-[7vw]"
+          className="mr-[2vw] flex h-[30vw] w-[250vw] items-center gap-[5vw] px-[5vw] max-[600px]:h-[76vh] max-[600px]:w-[620vw] max-[600px]:px-[7vw]"
         >
           <div className="h-full w-[30vw] overflow-hidden rounded-[1vw] max-[600px]:h-[65vw] max-[600px]:w-[85vw] max-[600px]:rounded-[5vw]">
             <img
@@ -438,16 +431,17 @@ export default function Timeline({
 
             <div className="flex h-1/2 w-full items-center justify-start gap-[.5vw]">
               <div className="h-full w-[20%] pt-[2vw] max-[600px]:h-fit max-[600px]:pt-[5vw]">
-                <h2 className="w-[65%]  text-[3vw] leading-[0.95] max-[600px]:text-[8.5vw] font-display">
+                <h2 className="w-[85%] text-[2.4vw] leading-[1.05] max-[600px]:text-[7vw] font-display font-semibold">
                   {title}
                 </h2>
               </div>
 
-              <div className="w-full flex h-full gap-x-[15vw] max-[600px]:gap-x-[40vw]">
+              {/* Top row: Item 1 (Pillar 1) and Item 2 (Pillar 3) */}
+              <div className="w-full flex h-full gap-x-[44vw] pr-[22vw] max-[600px]:gap-x-[85vw] max-[600px]:pr-[35vw]">
                 {topJourneyData.map((item) => (
                   <div
                     key={`top-${item.id}`}
-                    className="relative h-full w-[30vw] px-[3vw] max-[600px]:flex max-[600px]:w-[70vw] max-[600px]:flex-col max-[600px]:px-[7vw]"
+                    className="relative h-full w-[38vw] px-[3vw] max-[600px]:flex max-[600px]:w-[80vw] max-[600px]:flex-col max-[600px]:px-[7vw]"
                   >
                     <div className="w-full absolute left-0 bottom-0 top-0 h-full">
                       <div
@@ -460,18 +454,28 @@ export default function Timeline({
                       ></div>
                     </div>
 
-                    <div className="mt-[-1vw] space-y-[1vw] max-[600px]:mt-[-2vw]">
+                    <div className="mt-[-2vw] space-y-[0.6vw] max-[600px]:mt-[-3vw]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.72vw] max-[600px]:text-[2.4vw] tracking-[0.2em] uppercase font-mono font-semibold" style={{ color: activeColor }}>
+                          {item.tag}
+                        </span>
+                      </div>
                       <h4
-                        className={`title-${item.id}  text-[2.5vw] leading-none max-[600px]:text-[6.4vw] font-display`}
+                        className={`title-${item.id} text-[1.6vw] leading-[1.15] max-[600px]:text-[5vw] font-display font-semibold`}
                       >
-                        {item.year} {item.month}
+                        {item.headline}
                       </h4>
                       <p
-                        className={`description-${item.id} w-[90%] text-[1.5vw] leading-[1.15] max-[600px]:w-[90%] max-[600px]:text-[4.8vw]`}
+                        className={`description-${item.id} w-[95%] text-[0.95vw] leading-[1.4] max-[600px]:w-[95%] max-[600px]:text-[3.6vw]`}
                         style={mutedTextStyle}
                       >
-                        {item.content}
+                        {item.body}
                       </p>
+                      <div className="pt-[0.2vw]">
+                        <span className="inline-block text-[0.68vw] max-[600px]:text-[2.4vw] font-mono px-2 py-0.5 rounded border border-white/10 bg-white/5 text-white/70">
+                          {item.badge}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -481,42 +485,53 @@ export default function Timeline({
             <div className="h-1/2 flex items-center justify-start w-full">
               <div className="w-[34%] pt-[2vw] max-[600px]:pt-[5vw] max-[600px]:w-[30%] h-full">
                 <p
-                  className=" text-[1.65vw] leading-none max-[600px]:text-[4.2vw] font-mono"
+                  className="text-[1.4vw] leading-none max-[600px]:text-[3.8vw] font-mono"
                   style={mutedTextStyle}
                 >
                   {periodLabel}
                 </p>
               </div>
 
-              <div className="w-full flex h-full gap-x-[20vw] ml-[7vw] max-[600px]:gap-x-[40vw] max-[600px]:ml-[7vw]">
+              {/* Bottom row: Item 1 (Pillar 2) and Item 2 (Pillar 4) offset horizontally by 26vw with snug end padding */}
+              <div className="w-full flex h-full gap-x-[44vw] ml-[26vw] pr-[22vw] max-[600px]:gap-x-[85vw] max-[600px]:ml-[45vw] max-[600px]:pr-[45vw]">
                 {bottomJourneyData.map((item) => (
                   <div
                     key={`bottom-${item.id}`}
-                    className="relative h-full w-[25vw] px-[3vw] max-[600px]:w-[70vw] max-[600px]:px-[7vw]"
+                    className={`relative h-full w-[38vw] px-[3vw] max-[600px]:w-[82vw] max-[600px]:px-[6vw] card-${item.id}`}
                   >
-                    <div className="w-full absolute left-0 bottom-[-1%] h-full">
-                      <div
-                        className={`h-[94%] origin-top w-px rounded-full max-[600px]:h-full jl-${item.id}`}
-                        style={activeStyle}
-                      ></div>
+                    <div className="w-full absolute left-0 top-0 h-full">
                       <div
                         className={`size-[1vw] max-[600px]:size-[2.5vw] translate-x-[-50%] relative w-auto aspect-square rounded-full jd-${item.id}`}
                         style={activeStyle}
                       ></div>
+                      <div
+                        className={`h-[94%] origin-top w-px rounded-full max-[600px]:h-full jl-${item.id}`}
+                        style={activeStyle}
+                      ></div>
                     </div>
 
-                    <div className="flex h-full w-full flex-col justify-end space-y-[1vw]">
+                    <div className="flex h-full w-full flex-col justify-start pt-[2.8vw] max-[600px]:pt-[3vh] space-y-[0.6vw] max-[600px]:space-y-[1.5vw]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.72vw] max-[600px]:text-[2.2vw] tracking-[0.2em] uppercase font-mono font-semibold" style={{ color: activeColor }}>
+                          {item.tag}
+                        </span>
+                      </div>
                       <h4
-                        className={`title-${item.id}  text-[2.5vw] leading-none max-[600px]:text-[6.4vw] font-display`}
+                        className={`title-${item.id} text-[1.6vw] leading-[1.15] max-[600px]:text-[4.4vw] font-display font-semibold`}
                       >
-                        {item.year} {item.month}
+                        {item.headline}
                       </h4>
                       <p
-                        className={`description-${item.id} w-[90%] text-[1.5vw] leading-[1.15] max-[600px]:w-[90%] max-[600px]:text-[4.8vw]`}
+                        className={`description-${item.id} w-[95%] text-[0.95vw] leading-[1.4] max-[600px]:w-[95%] max-[600px]:text-[3.2vw] max-[600px]:leading-[1.35]`}
                         style={mutedTextStyle}
                       >
-                        {item.content}
+                        {item.body}
                       </p>
+                      <div className="pt-[0.2vw]">
+                        <span className="inline-block text-[0.68vw] max-[600px]:text-[2.2vw] font-mono px-2 py-0.5 rounded border border-white/10 bg-white/5 text-white/70">
+                          {item.badge}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}

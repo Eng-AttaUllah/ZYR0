@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { SEO } from '@/components/SEO';
 import Header from '@/components/nav/Header';
 import { ShaderHero } from '@/components/ui/shader-hero';
+import { LineArtShowcase } from '@/components/lineart';
 import LogoWall from '@/components/platform-home/LogoWall';
 import PlaygroundShowcase from '@/components/platform-home/PlaygroundShowcase';
 import SkillsSection from '@/components/platform-home/SkillsSection';
@@ -46,6 +47,9 @@ export default function PlatformHome() {
       <main>
         {/* Clean Hero — solid dark, Apple-style minimal, Agbalumo wordmark */}
         <ShaderHero />
+
+        {/* TODO: pick a candidate from LineArtShowcase and move it into the hero */}
+        <LineArtShowcase />
 
         {/* Partner & Infrastructure Logos — authentic SVGs */}
         <LogoWall />
