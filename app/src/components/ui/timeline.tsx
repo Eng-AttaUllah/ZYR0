@@ -404,11 +404,13 @@ export default function Timeline({
           ref={wholeSliderRef}
           className="mr-[2vw] flex h-[30vw] w-[250vw] items-center gap-[5vw] px-[5vw] max-[600px]:h-[76vh] max-[600px]:w-[620vw] max-[600px]:px-[7vw]"
         >
-          <div className="h-full w-[30vw] overflow-hidden rounded-[1vw] max-[600px]:h-[65vw] max-[600px]:w-[85vw] max-[600px]:rounded-[5vw]">
+          <div className="h-full w-[30vw] overflow-hidden rounded-[1vw] max-[600px]:h-[65vw] max-[600px]:w-[85vw] max-[600px]:rounded-[5vw] bg-muted/20 relative">
             <img
               src={imageUrl}
               alt={imageAlt}
               draggable={false}
+              loading="eager"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           </div>
