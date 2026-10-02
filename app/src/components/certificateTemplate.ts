@@ -247,7 +247,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
       position: relative;
       z-index: 2;
       height: 100%;
-      padding: 30px 88px 24px;
+      padding: 46px 72px 42px;
       display: flex;
       flex-direction: column;
     }
@@ -256,32 +256,32 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .top-row { display: grid; grid-template-columns: 1fr 1.5fr 1fr; align-items: start; }
     .gov { display: flex; align-items: flex-end; }
     .logos-top { display: flex; gap: 14px; align-items: center; margin-top: 4px; }
-    .logo-top { height: 64px; width: auto; display: block; object-fit: contain; }
+    .logo-top { height: 60px; width: auto; display: block; object-fit: contain; }
     .cert-meta-top {
-      margin-top: 10px;
-      font-size: 12px;
+      margin-top: 8px;
+      font-size: 11.5px;
       font-weight: 600;
       color: #333;
       letter-spacing: .5px;
-      line-height: 1.6;
+      line-height: 1.55;
       white-space: nowrap;
     }
     .cert-meta-top b { color: #111; font-weight: 700; }
     .award-center { display: flex; flex-direction: column; align-items: center; }
-    .award-center .logo-top { height: 48px; margin-top: 2px; }
+    .award-center .logo-top { height: 46px; margin-top: 2px; }
     .award-sub {
       text-align: center;
       color: #1e40af;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 800;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      margin-top: 6px;
+      margin-top: 5px;
     }
     .zyro-brand { text-align: right; }
-    .brand-main { font-size: 34px; font-weight: 800; color: #1e3a8a; letter-spacing: 2.5px; line-height: 1; }
-    .brand-main .brand-o { height: 36px; width: auto; display: inline-block; vertical-align: -5px; }
-    .brand-sub { font-size: 10.5px; font-weight: 700; color: #333; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
+    .brand-main { font-size: 32px; font-weight: 800; color: #1e3a8a; letter-spacing: 2.5px; line-height: 1; }
+    .brand-main .brand-o { height: 34px; width: auto; display: inline-block; vertical-align: -5px; }
+    .brand-sub { font-size: 10px; font-weight: 700; color: #333; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
     .brand-sub b { color: #a1262a; font-weight: 800; }
 
     /* ── Title block ─────────────────────────────────────────────────── */
@@ -290,121 +290,103 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding-top: 45px;
+      padding-top: 10px;
+      padding-bottom: 2px;
       min-height: 0;
     }
-    .title-wrap { display: flex; align-items: center; justify-content: center; gap: 18px; }
-    .title-line { flex: 0 0 92px; height: 2px; background: linear-gradient(90deg, transparent, #b89c56); }
+    .title-wrap { display: flex; align-items: center; justify-content: center; gap: 20px; }
+    .title-line { flex: 0 0 96px; height: 2px; background: linear-gradient(90deg, transparent, #b89c56); }
     .title-line.r { transform: scaleX(-1); }
     .title {
       font-family: 'Cinzel', serif;
-      font-size: 26px;
+      font-size: 31px;
       font-weight: 700;
       color: #191512;
-      letter-spacing: 1.8px;
+      letter-spacing: 2.2px;
       text-align: center;
       margin: 0;
       white-space: nowrap;
     }
     .presented {
       text-align: center;
-      font-size: 13px;
+      font-size: 14.5px;
       font-weight: 600;
       color: #4a4a4a;
-      letter-spacing: 3.2px;
+      letter-spacing: 3.8px;
       margin: 10px 0 0;
       text-transform: uppercase;
     }
 
     /* ── Recipient name (gold underline) ──────────────────────────────── */
-    .name-pill { margin: 16px auto 0; display: flex; justify-content: center; }
+    .name-pill { margin: 12px auto 0; display: flex; justify-content: center; }
     .name-pill-inner { padding: 2px 8px 4px; }
     .name-text {
       font-family: 'Cinzel', serif;
       font-weight: 700;
-      font-size: 28px;
+      font-size: 36px;
       color: #191512;
-      letter-spacing: 1.6px;
-      padding: 0 18px 8px;
+      letter-spacing: 2px;
+      padding: 0 26px 6px;
       border-bottom: 2.5px solid #b89c56;
       display: inline-block;
     }
 
     /* ── Body copy ───────────────────────────────────────────────────── */
     .body-text {
-      margin: 13px auto 0;
-      max-width: 830px;
+      margin: 16px auto 0;
+      max-width: 900px;
       text-align: center;
       font-family: 'Playfair Display', serif;
-      font-size: 15px;
-      line-height: 1.72;
+      font-size: 18px;
+      line-height: 1.65;
       color: #26221e;
     }
-    .body-text p { margin: 0 0 7px; }
+    .body-text p { margin: 0 0 8px; }
+    .body-text p:last-child { margin-bottom: 0; }
     .body-text b { font-weight: 700; color: #13100d; }
-    .body-text .internship-title { font-weight: 900; font-size: 17px; color: #13100d; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
-    .body-text .company-name { font-weight: 900; font-size: 17px; color: #13100d; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
-    .body-text .cert-dates { font-weight: 900; font-size: 17px; color: #13100d; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
-
-    .footer-left {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 9px;
-    }
-    .meta-row {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 3px;
-      font-size: 10px;
-      font-weight: 600;
-      color: #333;
-      letter-spacing: .5px;
-      white-space: nowrap;
-    }
-    .meta-row b { color: #111; font-weight: 700; }
+    .body-text .internship-title { font-weight: 800; font-size: 19px; color: #13100d; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
+    .body-text .company-name { font-weight: 800; font-size: 19px; color: #13100d; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
+    .body-text .cert-dates { font-weight: 800; font-size: 19px; color: #13100d; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; text-decoration-color: #b89c56; }
 
     /* ── Footer: signatures | seal + QR ───────────────────────────────── */
     .footer-row {
-      margin-top: 4px;
-      padding-top: 8px;
+      margin-top: auto;
+      padding-top: 10px;
       display: grid;
       grid-template-columns: 1fr auto 1fr;
-      align-items: start;
-      gap: 28px;
+      align-items: end;
+      gap: 24px;
     }
     .sig-block { display: flex; flex-direction: column; align-items: center; text-align: center; }
-    .sig-block.sig-dir { transform: translate(14px, 0); }
     .sig-line {
-      width: 200px;
-      height: 62px;
+      width: 220px;
+      height: 54px;
       border-bottom: 1.5px solid #666;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
       overflow: visible;
     }
-    .sig-img { max-height: 60px; max-width: 250px; width: auto; object-fit: contain; display: block; margin-bottom: 2px; }
-    .sig-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
-    .sig-company { font-size: 12px; font-weight: 700; color: #333; letter-spacing: .5px; margin-top: 3px; }
-    .sig-meta { margin-top: 8px; font-size: 9.5px; font-weight: 600; color: #555; letter-spacing: .4px; line-height: 1.55; }
-    .sig-meta b { color: #111; font-weight: 700; }
+    .sig-img { max-height: 52px; max-width: 210px; width: auto; object-fit: contain; display: block; margin-bottom: 2px; }
+    .sig-title { font-size: 11.5px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    .sig-company { font-size: 12.5px; font-weight: 700; color: #333; letter-spacing: .5px; margin-top: 2px; }
     .center-col { display: flex; flex-direction: column; align-items: center; }
-    .seal-qr { display: flex; align-items: flex-end; gap: 16px; }
+    .seal-qr { display: flex; align-items: center; gap: 20px; }
     .seal-col { display: flex; flex-direction: column; align-items: center; }
     .seal-gold {
-      width: 80px;
-      height: 80px;
-      display: block;
-      line-height: 0;
+      width: 82px;
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .seal-gold svg { width: 100%; height: 100%; display: block; }
-    .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 7px; color: #b89c56; letter-spacing: 1.5px; line-height: 1; }
-    .qr { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .qr-img { width: 70px; height: 70px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; margin-bottom: 10px; }
-    .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #4a4a4a; line-height: 1; margin-bottom: 1.5px; }
+    .seal-gold img, .seal-gold svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 5px; color: #b89c56; letter-spacing: 1.5px; line-height: 1; }
+    .qr { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .qr-img { width: 72px; height: 72px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; display: block; }
+    .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #4a4a4a; line-height: 1; }
+    .qr-verify-url { font-family: 'Montserrat', sans-serif; font-size: 8.5px; font-weight: 600; color: #777; letter-spacing: 0.5px; }
 
     @media print {
       body { width: 297mm; height: 210mm; }
@@ -455,26 +437,23 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
 
           <div class="main">
             <div class="title-wrap">
-            <div class="title-line"></div>
-            <h1 class="title">CERTIFICATE OF INTERNSHIP COMPLETION</h1>
-            <div class="title-line r"></div>
-          </div>
-
-          <div class="presented">This certificate is proudly presented to</div>
-
-          <div class="name-pill">
-            <div class="name-pill-inner">
-              <span class="name-text">${recipientName}</span>
+              <div class="title-line"></div>
+              <h1 class="title">CERTIFICATE OF INTERNSHIP COMPLETION</h1>
+              <div class="title-line r"></div>
             </div>
-          </div>
 
-          <div class="body-text">
-            <p>For successfully completing a <b class="internship-title">${internshipTitle}</b> at ZYRO through the ZYRO Platform from <b class="cert-dates">${dates}</b>, demonstrating exceptional proficiency, dedication, and technical skill in executing all professional responsibilities.</p>
-            <p>The candidate has collaborated with <b class="company-name">${companyName}</b> through the ZYRO Platform.</p>
-            <p>Congratulations on your achievement and continued interest in the vital subject of software engineering.</p>
-            <p>Keep up the great work in developing innovative and efficient digital tools.</p>
-            <p>Your contribution throughout the internship at ZYRO has been truly valuable and inspiring.</p>
-          </div>
+            <div class="presented">This certificate is proudly presented to</div>
+
+            <div class="name-pill">
+              <div class="name-pill-inner">
+                <span class="name-text">${recipientName}</span>
+              </div>
+            </div>
+
+            <div class="body-text">
+              <p>In recognition of the successful completion of the <b class="internship-title">${internshipTitle}</b> at ZYRO in collaboration with <b class="company-name">${companyName}</b> from <b class="cert-dates">${dates}</b>.</p>
+              <p>Throughout the internship, the candidate consistently demonstrated technical competence, initiative, and responsibility in executing all project deliverables. Congratulations on this milestone and thank you for your meaningful contributions throughout your time with the team.</p>
+            </div>
           </div>
 
           <div class="footer-row">
@@ -488,7 +467,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
                 <div class="seal-col">
                   <div class="seal-gold" role="img" aria-label="ZYRO verified seal">
                     ${sealSrc
-                      ? `<img src="${sealSrc}" alt="" style="width:100%;height:100%;object-fit:contain;display:block" />`
+                      ? `<img src="${sealSrc}" alt="" />`
                       : `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
                       <defs>
                         <radialGradient id="zyro-seal-gold" cx="35%" cy="30%" r="78%">
@@ -506,14 +485,16 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
                   <div class="badge-text">VERIFIED SECURE</div>
                 </div>
                 <div class="qr">
-                  <img class="qr-img" src="${qrSrc}" alt="Verification QR" width="70" height="70" />
+                  <img class="qr-img" src="${qrSrc}" alt="Verification QR" width="68" height="68" />
                   <span class="qr-label">Scan to Verify</span>
+                  <span class="qr-verify-url">zyroo.org/verify</span>
                 </div>
               </div>
             </div>
-            <div class="sig-block sig-dir">
+            <div class="sig-block">
               <div class="sig-line" aria-hidden="true">${dirSigSrc ? `<img class="sig-img" src="${dirSigSrc}" alt="" />` : ''}</div>
               <div class="sig-title">ZYRO Director</div>
+              <div class="sig-company">ZYRO Organization</div>
             </div>
           </div>
         </div>
