@@ -39,7 +39,9 @@ export function LineArtCanvas({
   const failedRef = useRef(false);
   const [failed, setFailed] = useState(false);
   const propsRef = useRef({ autoRotate, rotateSpeed });
-  propsRef.current = { autoRotate, rotateSpeed };
+  useEffect(() => {
+    propsRef.current = { autoRotate, rotateSpeed };
+  }, [autoRotate, rotateSpeed]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
