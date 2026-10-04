@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 All 156 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 0.62.6).
 
+### 2026-10-01
+
+- **`f6dfd4c`** 0.73.4 — feat(admin): enable administrators to create, publish live, and feature tools and skills
+- **`80d2f3b`** 0.73.3 — refactor(tools): remove all hardcoded tools and rely strictly on Supabase registry
+- **`70a8191`** 0.73.2 — feat(tools): wire /tools routing, platform navigation, and navbar dropdowns
+- **`90a6353`** 0.73.1 — feat(tools): add Student, Company, and Admin moderation dashboards for ToolHub
+- **`4213c99`** 0.73.0 — feat(tools): add public /tools discovery catalog with search, filtering, and SEO prerendering
+- **`04f683d`** 0.72.5 — feat(tools): add ToolCard, FeaturedToolCard, ToolPreviewDialog, SubmitToolDialog, and EmptyState components
+- **`d60bc8f`** 0.72.4 — feat(tools): add database schema, types, and service layer for ToolHub registry
+- **`78e9f95`** 0.72.3 — fix(blog): eliminate duplicate category tags and titles on fallback cards
+- **`ac18b32`** 0.72.2 — fix(blog): resolve React Compiler useMemo memoization lint error in BlogPostDetail
+- **`5b0b9cb`** 0.72.1 — feat(blog): polish editorial UX, reading layout, TOC, and admin CMS publishing
+
+### 2026-09-19
+
+- **`a9d94df`** 0.72.0 — feat(blog): implement blog architecture, clean editorial layout, and admin CMS
+
 ### 2026-09-02
 
 - **`e108747`** 0.62.6 — chore: update .gitignore with phases.md and SAAS_REBRAND_PLAN.md
