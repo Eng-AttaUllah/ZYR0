@@ -56,26 +56,32 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('[Unhandled Rejection]', event.reason);
 });
 
-initLenisIfPublic();
+function Root() {
+  useEffect(() => {
+    initLenisIfPublic();
+  }, []);
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <PostHogProvider
-      apiKey={import.meta.env.POSTHOG_PROJECT_TOKEN}
-      options={posthogOptions}
-    >
-      <ErrorBoundary>
-        <HelmetProvider>
-          <BrowserRouter>
-            <PageTracker />
-            <AuthProvider>
-              <ThemeProvider attribute="class" defaultTheme="dark">
-                <App />
-              </ThemeProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </HelmetProvider>
-      </ErrorBoundary>
-    </PostHogProvider>
-  </StrictMode>,
-);
+  return (
+    <StrictMode>
+      <PostHogProvider
+        apiKey={import.meta.env.POSTHOG_PROJECT_TOKEN}
+        options={posthogOptions}
+      >
+        <ErrorBoundary>
+          <HelmetProvider>
+            <BrowserRouter>
+              <PageTracker />
+              <AuthProvider>
+                <ThemeProvider attribute="class" defaultTheme="light">
+                  <App />
+                </ThemeProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </HelmetProvider>
+        </ErrorBoundary>
+      </PostHogProvider>
+    </StrictMode>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<Root />);

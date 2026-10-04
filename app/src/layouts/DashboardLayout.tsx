@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Menu, X, Bell, Search, ChevronDown, LogOut, User, Settings,
   Home, FolderOpen, FileCheck, FileText, ClipboardList, CheckSquare, Award,
@@ -369,7 +369,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
       {/* Mobile Overlay */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -392,13 +392,13 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
               <img src="/zyro-logo.webp" alt="ZYR0 Logo" width="32" height="32" className="w-8 h-8 object-contain rounded-md" />
             </div>
             {!collapsed && (
-              <motion.span
+              <m.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="text-lg font-bold whitespace-nowrap"
               >
                 ZYR0
-              </motion.span>
+              </m.span>
             )}
           </Link>
           <button
@@ -469,7 +469,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
                 </Link>
                 {/* Submenu */}
                 {!collapsed && hasChildren && isExpanded && (
-                  <motion.div
+                  <m.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -495,7 +495,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
                         </Link>
                       );
                     })}
-                  </motion.div>
+                  </m.div>
                 )}
               </div>
             );
@@ -638,7 +638,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
               
               <AnimatePresence>
                 {notificationsOpen && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
@@ -700,7 +700,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
                         ))
                       )}
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -715,7 +715,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
               </button>
               <AnimatePresence>
                 {profileOpen && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
@@ -797,7 +797,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
                         <LogOut className="w-4 h-4" /> Sign Out
                       </button>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -855,7 +855,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -863,7 +863,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
             {/* Modal Content */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -940,7 +940,7 @@ export default function DashboardLayout({ role }: { role: UserRole }) {
                   Complete Profile
                 </button>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

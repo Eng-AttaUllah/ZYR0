@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
           'vendor-motion': ['framer-motion'],
           'vendor-icons': ['lucide-react'],
           'vendor-posthog': ['posthog-js'],
+          'vendor-common': ['lenis', 'sonner', 'next-themes', 'react-helmet-async'],
         },
       },
     },
