@@ -12,23 +12,12 @@ All 156 commits between `main` and `develop` — one entry per commit, versioned
 ### 2026-10-02
 
 - **`2cf0399`** 2.75.2 — fix(certificate): refine layout, typography scale, vertical positioning, and body copy
-
-### 2026-09-26
-
-- **`e8256ab`** 0.75.1 — style(certificate): raise QR image above verification label
-- **`745204f`** 0.75.0 — feat(certificate): add director signature, transparent coordinator signature
-
-### 2026-09-25
-
-- **`8256ac5`** 0.74.5 — feat(certificate): use seal.png image with SVG seal fallback
-- **`7c4bedd`** 0.74.4 — feat(certificate): integrate program coordinator signature image
-- **`f87d02d`** 0.74.3 — style(certificate): engraved golden ZYRO seal and align verification labels
-
-### 2026-09-23
-
-- **`91baa1c`** 0.74.2 — style(certificate): move cert meta to header, logo above heading, update tagline
-- **`ed1a655`** 0.74.1 — style(certificate): align footer row and enlarge signature meta type
-- **`b8ff797`** 0.74.0 — style(certificate): remove external logos, refine heading and signature lines
+- **`e929f57`** 0.71.4 — fix(nav): replace scroll-shrinking island pill with persistent full-width navbar
+- **`aacfdfc`** 0.71.3 — fix(security): allow images.unsplash.com in CSP and optimize timeline image loading
+- **`18b4515`** 0.71.2 — feat(hero): optimize mobile shape placement and seamless dissolve-converge transitions
+- **`150a882`** 0.71.1 — fix(lineart): avoid ref mutation during render in LineArtCanvas
+- **`5a65f66`** 0.71.0 — feat(hero): integrate 3d line-art continuous cycle with light/dark mode support
+- **`62a10ea`** 0.70.5 — feat(landing): replace timeline story with 4 Defensible Pillars and refine scroll alignment
 
 ### 2026-10-01
 
@@ -42,19 +31,6 @@ All 156 commits between `main` and `develop` — one entry per commit, versioned
 - **`78e9f95`** 0.72.3 — fix(blog): eliminate duplicate category tags and titles on fallback cards
 - **`ac18b32`** 0.72.2 — fix(blog): resolve React Compiler useMemo memoization lint error in BlogPostDetail
 - **`5b0b9cb`** 0.72.1 — feat(blog): polish editorial UX, reading layout, TOC, and admin CMS publishing
-
-### 2026-09-19
-
-- **`a9d94df`** 0.72.0 — feat(blog): implement blog architecture, clean editorial layout, and admin CMS
-
-### 2026-10-02
-
-- **`e929f57`** 0.71.4 — fix(nav): replace scroll-shrinking island pill with persistent full-width navbar
-- **`aacfdfc`** 0.71.3 — fix(security): allow images.unsplash.com in CSP and optimize timeline image loading
-- **`18b4515`** 0.71.2 — feat(hero): optimize mobile shape placement and seamless dissolve-converge transitions
-- **`150a882`** 0.71.1 — fix(lineart): avoid ref mutation during render in LineArtCanvas
-- **`5a65f66`** 0.71.0 — feat(hero): integrate 3d line-art continuous cycle with light/dark mode support
-- **`62a10ea`** 0.70.5 — feat(landing): replace timeline story with 4 Defensible Pillars and refine scroll alignment
 
 ### 2026-09-30
 
@@ -73,8 +49,22 @@ All 156 commits between `main` and `develop` — one entry per commit, versioned
 - **`0473ad5`** 0.69.4 — feat: add dynamic island navbar convergence on scroll and centered pill with full build validation
 - **`459393b`** 0.69.3 — feat(home): replace bento grid with WebGL2 molten ring playground carousel
 
+### 2026-09-26
+
+- **`e8256ab`** 0.75.1 — style(certificate): raise QR image above verification label
+- **`745204f`** 0.75.0 — feat(certificate): add director signature, transparent coordinator signature
+
+### 2026-09-25
+
+- **`8256ac5`** 0.74.5 — feat(certificate): use seal.png image with SVG seal fallback
+- **`7c4bedd`** 0.74.4 — feat(certificate): integrate program coordinator signature image
+- **`f87d02d`** 0.74.3 — style(certificate): engraved golden ZYRO seal and align verification labels
+
 ### 2026-09-23
 
+- **`91baa1c`** 0.74.2 — style(certificate): move cert meta to header, logo above heading, update tagline
+- **`ed1a655`** 0.74.1 — style(certificate): align footer row and enlarge signature meta type
+- **`b8ff797`** 0.74.0 — style(certificate): remove external logos, refine heading and signature lines
 - **`5d0857f`** 0.69.2 — style(timeline): tighten lead-in spacing and adjust mobile sticky layout
 - **`aa83373`** 0.69.1 — feat(home): integrate timeline, blog, skills, and tabbed FAQ sections
 - **`df6db21`** 0.69.0 — style(skills): redesign ecosystem section with asymmetric rail and clickable cards
@@ -93,6 +83,10 @@ All 156 commits between `main` and `develop` — one entry per commit, versioned
 - **`39546f5`** 0.67.2 — feat(logowall): upgrade partner marquee with authentic SVG logos
 - **`a725745`** 0.67.1 — feat(hero): restyle hero with clean dark background, Agbalumo wordmark, and animated tagline
 - **`1c8a963`** 0.67.0 — style(brand): add Agbalumo/Sora font configuration and brand tokens
+
+### 2026-09-19
+
+- **`a9d94df`** 0.72.0 — feat(blog): implement blog architecture, clean editorial layout, and admin CMS
 
 ### 2026-09-09
 
@@ -126,7 +120,6 @@ All 156 commits between `main` and `develop` — one entry per commit, versioned
 - **`77840e9`** 0.63.2 — fix(seo): update branding, add llms.txt reference, trim meta description
 - **`4d689d4`** 0.63.1 — fix(seo): configure proper 404 handling in Vercel
 - **`844b749`** 0.63.0 — fix(seo): add pre-rendered homepage content for crawlers
-
 ### 2026-09-02
 
 - **`e108747`** 0.62.6 — chore: update .gitignore with phases.md and SAAS_REBRAND_PLAN.md
