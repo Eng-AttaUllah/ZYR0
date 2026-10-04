@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 All 156 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 0.62.6).
 
+### 2026-10-02
+
+- **`2cf0399`** 0.75.2 — fix(certificate): refine layout, typography scale, vertical positioning, and body copy
+
+### 2026-09-26
+
+- **`e8256ab`** 0.75.1 — style(certificate): raise QR image above verification label
+- **`745204f`** 0.75.0 — feat(certificate): add director signature, transparent coordinator signature
+
+### 2026-09-25
+
+- **`8256ac5`** 0.74.5 — feat(certificate): use seal.png image with SVG seal fallback
+- **`7c4bedd`** 0.74.4 — feat(certificate): integrate program coordinator signature image
+- **`f87d02d`** 0.74.3 — style(certificate): engraved golden ZYRO seal and align verification labels
+
+### 2026-09-23
+
+- **`91baa1c`** 0.74.2 — style(certificate): move cert meta to header, logo above heading, update tagline
+- **`ed1a655`** 0.74.1 — style(certificate): align footer row and enlarge signature meta type
+- **`b8ff797`** 0.74.0 — style(certificate): remove external logos, refine heading and signature lines
+
 ### 2026-09-02
 
 - **`e108747`** 0.62.6 — chore: update .gitignore with phases.md and SAAS_REBRAND_PLAN.md
