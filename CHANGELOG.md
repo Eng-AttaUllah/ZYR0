@@ -9,6 +9,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 All 156 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 0.62.6).
 
+### 2026-10-02
+
+- **`e929f57`** 0.71.4 — fix(nav): replace scroll-shrinking island pill with persistent full-width navbar
+- **`aacfdfc`** 0.71.3 — fix(security): allow images.unsplash.com in CSP and optimize timeline image loading
+- **`18b4515`** 0.71.2 — feat(hero): optimize mobile shape placement and seamless dissolve-converge transitions
+- **`150a882`** 0.71.1 — fix(lineart): avoid ref mutation during render in LineArtCanvas
+- **`5a65f66`** 0.71.0 — feat(hero): integrate 3d line-art continuous cycle with light/dark mode support
+- **`62a10ea`** 0.70.5 — feat(landing): replace timeline story with 4 Defensible Pillars and refine scroll alignment
+
+### 2026-09-30
+
+- **`fdf2c0f`** 0.70.4 — feat(home): default the platform to light theme for the playground
+- **`9525f66`** 0.70.3 — fix(molten-ring): end the deck and release the page on phones
+- **`c31413c`** 0.70.2 — feat(home): restore molten ring carousel verbatim and unpin the playground
+- **`6231da4`** 0.70.1 — fix(home): read playground progress in the frame loop instead of on scroll
+
+### 2026-09-29
+
+- **`8de0c25`** 0.70.0 — feat(home): pin playground carousel to scroll and adopt reference molten-ring component
+
+### 2026-09-27
+
+- **`7ed4560`** 0.69.5 — fix: resolve mobile touch scrolling and pointer capture blocking in liquid carousel
+- **`0473ad5`** 0.69.4 — feat: add dynamic island navbar convergence on scroll and centered pill with full build validation
+- **`459393b`** 0.69.3 — feat(home): replace bento grid with WebGL2 molten ring playground carousel
+
+### 2026-09-23
+
+- **`5d0857f`** 0.69.2 — style(timeline): tighten lead-in spacing and adjust mobile sticky layout
+- **`aa83373`** 0.69.1 — feat(home): integrate timeline, blog, skills, and tabbed FAQ sections
+- **`df6db21`** 0.69.0 — style(skills): redesign ecosystem section with asymmetric rail and clickable cards
+
+### 2026-09-22
+
+- **`5020bbb`** 0.68.5 — style(theme): implement full light and dark mode support across homepage sections
+- **`327a380`** 0.68.4 — style(theme): fix footer and dark mode tokens from blue to neutral dark
+- **`a80dd99`** 0.68.3 — feat(products): restore minimal and clear BentoProductGrid for screenshots and gifs
+- **`abc603e`** 0.68.2 — refactor(home): assemble restyled PlatformHome page flow and remove pricing and stats
+- **`3cc276a`** 0.68.1 — style(faq-cta): modernize FAQ accordion and create minimal statement CTA
+- **`a52100f`** 0.68.0 — feat(blog): add latest blog preview section with editorial cards
+- **`e8129f7`** 0.67.5 — feat(skills): add Skills Marketplace section with featured community and official skills
+- **`bb35f66`** 0.67.4 — feat(features): add Linear-style horizontal feature highlight strip (01-04)
+- **`5002936`** 0.67.3 — feat(products): enrich bento grid with UI mockups, prompt bar, and feature badges
+- **`39546f5`** 0.67.2 — feat(logowall): upgrade partner marquee with authentic SVG logos
+- **`a725745`** 0.67.1 — feat(hero): restyle hero with clean dark background, Agbalumo wordmark, and animated tagline
+- **`1c8a963`** 0.67.0 — style(brand): add Agbalumo/Sora font configuration and brand tokens
+
+### 2026-09-09
+
+- **`0dafb09`** 0.66.5 — fix(ai-gateway): make FALLBACK_ORDER lazy so env vars are read per-request
+
+### 2026-09-07
+
+- **`ac0f35c`** 0.66.4 — fix(landing): fix stats count-up animation
+- **`1312d46`** 0.66.3 — feat(landing): add standalone stats section with upgraded visuals
+- **`6fdab38`** 0.66.2 — feat(landing): add Why ZYR0 value proposition section
+- **`265ec34`** 0.66.1 — feat(landing): consolidate feature sections, upgrade bento grid
+- **`3e36c38`** 0.66.0 — feat(landing): replace fake LogoWall with real AI & infra partners
+
+### 2026-09-05
+
+- **`ff0ec5f`** 0.65.5 — fix(performance): dynamic-import MeshGradient into lazy chunk to prevent desktop freeze
+- **`07295ae`** 0.65.4 — fix(perf): isolate recharts into lazy chunk, keep vendor-common for shared deps
+- **`e793582`** 0.65.3 — fix(lint): remove try/catch around JSX, use static MeshGradient import
+- **`3f3d154`** 0.65.2 — fix(perf): defer Lenis init to useEffect, add vendor chunks
+- **`f262a88`** 0.65.1 — fix(cleanup): remove dead react-icons dependency
+- **`67b3073`** 0.65.0 — fix(perf): defer Lenis init to useEffect, add vendor chunks
+- **`e9d459c`** 0.64.5 — fix(perf): replace motion with m in 97 files for LazyMotion
+- **`1080dae`** 0.64.4 — fix(desktop): wrap ShaderHero in ErrorBoundary with CSS fallback
+- **`9e0200a`** 0.64.3 — fix(deploy): revert to catch-all rewrite for SPA routing
+- **`3bfa0c7`** 0.64.2 — fix(seo): add IndexNow reference for faster Bing indexing
+- **`bdd20fb`** 0.64.1 — fix(security): remove unsafe-eval from CSP header
+- **`f4b3099`** 0.64.0 — fix(seo): add SoftwareApplication schema for platform entity
+- **`578f823`** 0.63.5 — fix(seo): expand product page descriptions for crawlers
+- **`778a96b`** 0.63.4 — fix(seo): improve Organization schema with ImageObject logo
+- **`6e88f5c`** 0.63.3 — fix(seo): upgrade HSTS header with includeSubDomains and preload
+- **`77840e9`** 0.63.2 — fix(seo): update branding, add llms.txt reference, trim meta description
+- **`4d689d4`** 0.63.1 — fix(seo): configure proper 404 handling in Vercel
+- **`844b749`** 0.63.0 — fix(seo): add pre-rendered homepage content for crawlers
+
 ### 2026-09-02
 
 - **`e108747`** 0.62.6 — chore: update .gitignore with phases.md and SAAS_REBRAND_PLAN.md
