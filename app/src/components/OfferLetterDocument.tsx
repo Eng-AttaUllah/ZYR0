@@ -47,10 +47,7 @@ export default function OfferLetterDocument({ offer, showActions = true }: Offer
     ? new Date(internship.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'To be agreed upon';
 
-  const signatoryName = company?.owner?.full_name || 'Authorized Signatory';
-  const signatoryTitle = company?.owner?.title || 'Company Representative';
-  const signatoryEmail = company?.owner?.email;
-  const signatoryInfo = `${signatoryName} · ${signatoryTitle}`;
+  const signatoryInfo = 'Program Coordinator';
 
   const verifyUrl = useMemo(() => {
     return `${window.location.origin}/verify-offer/${offer.id}`;
@@ -384,22 +381,18 @@ export default function OfferLetterDocument({ offer, showActions = true }: Offer
                 </p>
                 <div className="space-y-1">
                   <div
-                    className="inline-block font-bold pb-1 pr-8"
-                    style={{
-                      fontFamily: FONT_SCRIPT,
-                      fontStyle: 'italic',
-                      fontSize: 20,
-                      color: NAVY,
-                      borderBottom: `2px solid ${GOLD}`,
-                    }}
+                    className="inline-block pb-1 pr-8"
+                    style={{ borderBottom: `2px solid ${GOLD}` }}
                   >
-                    {signatoryName}
+                    <img
+                      src="/signatures/program-coordinator.png"
+                      alt="Program Coordinator signature"
+                      className="h-14 w-auto object-contain object-left"
+                      onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+                    />
                   </div>
-                  <p className="text-xs pt-2" style={{ color: '#6b645a' }}>{signatoryTitle}</p>
+                  <p className="text-xs pt-2" style={{ color: '#6b645a' }}>Program Coordinator</p>
                   <p className="text-xs font-semibold" style={{ color: NAVY }}>{companyName}</p>
-                  {signatoryEmail && (
-                    <p className="text-[10px]" style={{ color: TEXT_MUTED }}>{signatoryEmail}</p>
-                  )}
                 </div>
               </div>
 

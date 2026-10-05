@@ -20,7 +20,6 @@ import {
   OFFER_LETTER_COLORS,
   FONT_CINZEL,
   FONT_SANS,
-  FONT_SCRIPT,
   OFFER_LETTER_FONTS_CSS_URL,
   CANVAS_PAGE_WIDTH,
   CANVAS_PAGE_HEIGHT,
@@ -287,9 +286,7 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
     ? `${internship?.location_type ?? 'Remote'} (${internship.location})`
     : (internship?.location_type || 'Remote');
 
-  const signatoryName  = company?.owner?.full_name || 'Authorized Signatory';
-  const signatoryTitle = company?.owner?.title || 'Company Representative';
-  const signatoryInfo  = `${signatoryName} · ${signatoryTitle}`;
+  const signatoryInfo = 'Program Coordinator';
 
   const startDate = internship?.start_date
     ? new Date(internship.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -415,21 +412,21 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
   ctx.lineTo(MARGIN + 240, sigY);
   ctx.stroke();
 
-  const signatoryEmail = company?.owner?.email;
+  // Signature image above the rule (personal names are not printed on the letter)
+  const sigImg = await safeLoadImage('/signatures/program-coordinator.png');
+  if (sigImg) {
+    const sigW = 160;
+    const sigH = Math.min(58, sigW * ((sigImg.naturalHeight || 1) / (sigImg.naturalWidth || 1)));
+    ctx.drawImage(sigImg, MARGIN, sigY - sigH - 4, sigW, sigH);
+  }
 
   ctx.fillStyle = NAVY;
-  ctx.font = `italic 600 20px ${FONT_SCRIPT}`;
-  ctx.fillText(truncateString(signatoryName, 28), MARGIN, sigY + 24);
+  ctx.font = `600 12px ${FONT_SANS}`;
+  ctx.fillText('Program Coordinator', MARGIN, sigY + 24);
 
   ctx.fillStyle = TEXT_SOFT;
   ctx.font = `400 11.5px ${FONT_SANS}`;
-  ctx.fillText(signatoryTitle, MARGIN, sigY + 44);
-  ctx.fillText(company?.name ?? 'Company Name', MARGIN, sigY + 60);
-  if (signatoryEmail) {
-    ctx.fillStyle = TEXT_MUTED;
-    ctx.font = `400 10.5px ${FONT_SANS}`;
-    ctx.fillText(signatoryEmail, MARGIN, sigY + 76);
-  }
+  ctx.fillText(company?.name ?? 'Company Name', MARGIN, sigY + 44);
 
   // Verification QR box (gold-framed, right side)
   const qrBoxW = 240;
