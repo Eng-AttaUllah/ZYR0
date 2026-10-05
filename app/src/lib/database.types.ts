@@ -291,6 +291,8 @@ export interface Certificate {
   status: CertificateStatus;
   issued_by: string | null;
   email_sent: boolean;
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
   // Joined
   recipient?: Profile;

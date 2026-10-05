@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 All 156 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 2.75.2).
 
+### 2026-10-05
+
+- **`9c65f6f`** feat(certificate): ZYRO brand refresh — new seal, Agbalumo header, verification copy (PR #148)
+- **`b297898`** feat(offer-letter): hide issue/expiry dates on letter, real expiry on /verify, auto-flip + owner-editable expiry (PR #148)
+
 ### 2026-10-02
 
 - **`2cf0399`** 2.75.2 — fix(certificate): refine layout, typography scale, vertical positioning, and body copy

@@ -153,17 +153,27 @@ export default function Verify() {
     setSearchParams(tab === 'offer' ? { type: 'offer' } : {}, { replace: true });
   };
 
+  // Expired = stored status, or past deadline (Accepted offers stay verifiable —
+  // they were accepted before the deadline).
+  const isOfferExpired =
+    verifiedOffer?.status === 'Expired' ||
+    (!!verifiedOffer?.expires_at &&
+      new Date(verifiedOffer.expires_at) < new Date() &&
+      verifiedOffer.status !== 'Accepted');
+
   const offerStatusLabel = verifiedOffer?.status === 'Revoked'
     ? 'This offer has been revoked'
     : verifiedOffer?.status === 'Rejected'
     ? 'This offer was declined'
     : verifiedOffer?.status === 'Accepted'
     ? 'This offer has been accepted'
-    : verifiedOffer?.status === 'Expired'
+    : isOfferExpired
     ? 'This offer has expired'
     : 'This offer matches ZYR0&apos;s official record for this offer ID.';
 
-  const offerInactive = verifiedOffer && ['Revoked', 'Expired'].includes(verifiedOffer.status);
+  const offerInactive = !!verifiedOffer && (['Revoked', 'Expired'].includes(verifiedOffer.status) || isOfferExpired);
+
+  const certRevoked = verifiedCert?.status === 'Revoked';
 
   return (
     <div className="pt-20 pb-16 px-4 min-h-screen">
@@ -322,19 +332,25 @@ export default function Verify() {
           {activeTab === 'certificate' && certResult === 'valid' && verifiedCert && (
             <m.div key="valid-cert" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
               className="mt-8 space-y-6">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className={`${certRevoked ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} border rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${certRevoked ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'}`}>
                     <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-emerald-800 dark:text-emerald-400">Verified Authentic</h3>
-                    <p className="text-xs text-emerald-700/80 dark:text-emerald-500/80">This credential matches ZYR0&apos;s official record for this certificate ID.</p>
+                    <h3 className={`font-bold ${certRevoked ? 'text-amber-800 dark:text-amber-400' : 'text-emerald-800 dark:text-emerald-400'}`}>
+                      {certRevoked ? 'Certificate Found — Revoked' : 'Verified Authentic'}
+                    </h3>
+                    <p className={`text-xs ${certRevoked ? 'text-amber-700/80 dark:text-amber-500/80' : 'text-emerald-700/80 dark:text-emerald-500/80'}`}>
+                      {certRevoked
+                        ? 'This credential has been revoked by ZYR0 and no longer represents a valid record.'
+                        : 'This credential matches ZYR0\u2019s official record for this certificate ID.'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs bg-emerald-500 text-white font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                    Verified
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider ${certRevoked ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                    {certRevoked ? 'Revoked' : 'Verified'}
                   </span>
                 </div>
               </div>
@@ -380,7 +396,7 @@ export default function Verify() {
                     <h3 className={`font-bold ${offerInactive ? 'text-amber-800 dark:text-amber-400' : 'text-emerald-800 dark:text-emerald-400'}`}>
                       {offerInactive ? 'Offer Found — Inactive' : 'Verified Authentic'}
                     </h3>
-                    <p className="text-xs text-emerald-700/80 dark:text-emerald-500/80">{offerStatusLabel}</p>
+                    <p className={`text-xs ${offerInactive ? 'text-amber-700/80 dark:text-amber-500/80' : 'text-emerald-700/80 dark:text-emerald-500/80'}`}>{offerStatusLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

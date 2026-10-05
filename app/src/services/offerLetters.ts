@@ -5,6 +5,16 @@ import { dedupRequest, createRequestKey } from '@/lib/cache/requestRegistry';
 
 
 // ── Common select fragment ────────────────────────────────────────────────────
+
+/** Flip stale offers (past expires_at, still Pending/Sent) to 'Expired'. Fire-and-forget. */
+async function expireStaleOffers(): Promise<void> {
+  try {
+    await supabase.rpc('expire_stale_offers');
+  } catch {
+    // Reads still fall back to the client-side date check.
+  }
+}
+
 const OFFER_LETTER_SELECT = `
   *,
   student:profiles!student_id (id, full_name, avatar_url, university, email),
@@ -23,6 +33,7 @@ const OFFER_LETTER_SELECT = `
 
 /** Get all offer letters for the currently logged-in student. */
 export async function getMyOfferLetters(useCache = true) {
+  await expireStaleOffers();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: [], error: null };
 
@@ -46,6 +57,7 @@ export async function getMyOfferLetters(useCache = true) {
 
 /** Get a single offer letter by id or human-readable offer code (student, company, admin, or public verify). */
 export async function getOfferLetterById(id: string, useCache = true) {
+  await expireStaleOffers();
   const cacheKey = createRequestKey('offer_letter', id);
   if (useCache) {
     const cached = getCachedData<any>(cacheKey);
@@ -101,6 +113,7 @@ export async function getOfferLetterByApplication(application_id: string, useCac
 
 /** Get all offer letters issued by the logged-in company. */
 export async function getCompanyOfferLetters(company_id: string, useCache = true) {
+  await expireStaleOffers();
   const cacheKey = createRequestKey('company_offer_letters', company_id);
   if (useCache) {
     const cached = getCachedData<any>(cacheKey);
@@ -188,6 +201,24 @@ export async function markOfferSent(id: string) {
     .single();
 }
 
+/** Update an offer's expiry date (company owner). */
+export async function updateOfferExpiry(id: string, expires_at: string) {
+  const { data, error } = await supabase
+    .from('offer_letters')
+    .update({ expires_at })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (!error && data) {
+    clearCache(createRequestKey('offer_letter', id));
+    clearCache(createRequestKey('company_offer_letters', data.company_id));
+    clearCache(createRequestKey('my_offer_letters', data.student_id));
+  }
+
+  return { data, error };
+}
+
 /** Revoke an offer letter (company or admin). */
 export async function revokeOfferLetter(id: string, reason?: string) {
   return supabase
@@ -204,8 +235,24 @@ export async function revokeOfferLetter(id: string, reason?: string) {
 
 // ── Student: respond ──────────────────────────────────────────────────────────
 
-/** Student accepts an offer letter. */
+/** Student accepts an offer letter — refused once the deadline has passed. */
 export async function acceptOfferLetter(id: string) {
+  await expireStaleOffers();
+
+  const { data: current } = await supabase
+    .from('offer_letters')
+    .select('status, expires_at')
+    .eq('id', id)
+    .single();
+
+  const pastDeadline = !!current?.expires_at && new Date(current.expires_at) < new Date();
+  if (current && current.status !== 'Accepted' && (current.status === 'Expired' || pastDeadline)) {
+    return {
+      data: null,
+      error: { message: 'This offer has expired and can no longer be accepted.', details: '', hint: '', code: 'EXPIRED' },
+    };
+  }
+
   const res = await supabase
     .from('offer_letters')
     .update({ status: 'Accepted', accepted_at: new Date().toISOString() })
@@ -248,6 +295,7 @@ export async function rejectOfferLetter(id: string) {
 
 /** Admin: fetch every offer letter (no filter). */
 export async function getAllOfferLetters(status?: OfferLetterStatus, useCache = true) {
+  await expireStaleOffers();
   const cacheKey = createRequestKey('all_offer_letters', status ?? 'all');
   if (useCache) {
     const cached = getCachedData<any>(cacheKey);
