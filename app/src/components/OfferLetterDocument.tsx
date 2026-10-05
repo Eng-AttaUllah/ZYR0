@@ -47,14 +47,6 @@ export default function OfferLetterDocument({ offer, showActions = true }: Offer
     ? new Date(internship.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'To be agreed upon';
 
-  const issueDateStr = offer.issued_at
-    ? new Date(offer.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  const expiryDateStr = offer.expires_at
-    ? new Date(offer.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : '30 days from issue';
-
   const signatoryName = company?.owner?.full_name || 'Authorized Signatory';
   const signatoryTitle = company?.owner?.title || 'Company Representative';
   const signatoryEmail = company?.owner?.email;
@@ -292,14 +284,6 @@ export default function OfferLetterDocument({ offer, showActions = true }: Offer
                   {offer.offer_code || offer.id.slice(0, 12).toUpperCase()}
                 </strong>
               </div>
-              <div>
-                <span style={{ letterSpacing: '1px', textTransform: 'uppercase', color: '#a99a78' }}>Issued</span>{' '}
-                <strong style={{ color: INK, fontWeight: 600 }}>{issueDateStr}</strong>
-              </div>
-              <div>
-                <span style={{ letterSpacing: '1px', textTransform: 'uppercase', color: '#a99a78' }}>Expires</span>{' '}
-                <strong style={{ color: INK, fontWeight: 600 }}>{expiryDateStr}</strong>
-              </div>
             </div>
           </header>
 
@@ -386,16 +370,7 @@ export default function OfferLetterDocument({ offer, showActions = true }: Offer
                 {DEFAULT_OFFER_TERMS.map((term, i) => (
                   <li key={i} className="flex gap-3">
                     <span style={{ color: GOLD, fontFamily: FONT_CINZEL, fontWeight: 700 }}>{i + 1}.</span>
-                    <span>
-                      {i === 2 ? (
-                        <>
-                          This offer remains valid until <strong style={{ color: INK }}>{expiryDateStr}</strong>, after
-                          which it may expire automatically unless extended.
-                        </>
-                      ) : (
-                        term
-                      )}
-                    </span>
+                    <span>{term}</span>
                   </li>
                 ))}
               </ol>

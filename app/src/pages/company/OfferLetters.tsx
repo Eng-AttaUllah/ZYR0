@@ -16,6 +16,7 @@ import {
   uploadOfferLetterPdf,
   attachOfferLetterPdf,
   markOfferSent,
+  updateOfferExpiry,
 } from '@/services/offerLetters';
 import { generateOfferLetterPdf } from '@/lib/offerLetterPdf';
 import OfferLetterDocument from '@/components/OfferLetterDocument';
@@ -29,6 +30,13 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** ISO timestamp → value for <input type="date"> (YYYY-MM-DD, UTC). */
+function expiryInputDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+}
 
 /** Build and send the offer letter notification email via the send-email Edge Function. */
 async function sendOfferLetterEmail(opts: {
@@ -520,6 +528,25 @@ export default function CompanyOfferLetters() {
     }
   }
 
+  // ── Expiry ─────────────────────────────────────────────────────────────────────
+  async function handleUpdateExpiry(offerId: string, dateStr: string): Promise<{ ok: boolean; message: string }> {
+    if (!dateStr) return { ok: false, message: 'Pick a date first.' };
+
+    const iso = new Date(`${dateStr}T23:59:59`).toISOString();
+    setError(null);
+    try {
+      const { error: err } = await updateOfferExpiry(offerId, iso);
+      if (err) throw err;
+      setOffers((prev) => prev.map((o) => o.id === offerId ? { ...o, expires_at: iso } : o));
+      setSelected((prev) => prev?.id === offerId ? { ...prev, expires_at: iso } : prev);
+      return { ok: true, message: 'Expiry date updated.' };
+    } catch (e: unknown) {
+      const msg = (e as Error).message ?? 'Failed to update expiry date.';
+      setError(msg);
+      return { ok: false, message: msg };
+    }
+  }
+
   // ── Download ──────────────────────────────────────────────────────────────────
   function handleDownload(offer: OfferLetter) {
     if (!offer.pdf_url) return;
@@ -900,6 +927,7 @@ export default function CompanyOfferLetters() {
             onPreviewCanvas={handlePreviewCanvasPdf}
             onRevoke={handleRevoke}
             onResend={handleResend}
+            onUpdateExpiry={handleUpdateExpiry}
             revoking={revoking}
             resending={resending}
             resendFeedback={resendFeedback}
@@ -952,16 +980,35 @@ interface ModalProps {
   onPreviewCanvas: (o: OfferLetter) => void;
   onRevoke: (id: string) => void;
   onResend: (o: OfferLetter) => void;
+  onUpdateExpiry: (id: string, dateStr: string) => Promise<{ ok: boolean; message: string }>;
   revoking: string | null;
   resending: string | null;
   resendFeedback: { offerId: string; ok: boolean; message: string } | null;
 }
 
-function CompanyOfferModal({ offer, onClose, onDownload, onPreviewCanvas, onRevoke, onResend, revoking, resending, resendFeedback }: ModalProps) {
+function CompanyOfferModal({ offer, onClose, onDownload, onPreviewCanvas, onRevoke, onResend, onUpdateExpiry, revoking, resending, resendFeedback }: ModalProps) {
   const cfg     = STATUS_CONFIG[offer.status] ?? STATUS_CONFIG.Pending;
   const Icon    = cfg.icon;
   const canRevoke = ['Pending', 'Sent'].includes(offer.status);
   const [viewTab, setViewTab] = useState<'document' | 'details'>('document');
+
+  const [expiryDraft, setExpiryDraft] = useState(() => expiryInputDate(offer.expires_at));
+  const [savingExpiry, setSavingExpiry] = useState(false);
+  const [expiryFeedback, setExpiryFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    setExpiryDraft(expiryInputDate(offer.expires_at));
+    setExpiryFeedback(null);
+  }, [offer.id, offer.expires_at]);
+
+  const handleSaveExpiry = async () => {
+    if (savingExpiry || !expiryDraft) return;
+    setSavingExpiry(true);
+    setExpiryFeedback(null);
+    const res = await onUpdateExpiry(offer.id, expiryDraft);
+    setExpiryFeedback(res);
+    setSavingExpiry(false);
+  };
 
   return (
     <m.div
@@ -1027,7 +1074,32 @@ function CompanyOfferModal({ offer, onClose, onDownload, onPreviewCanvas, onRevo
                   ['Issued',       offer.issued_at ? new Date(offer.issued_at).toLocaleDateString() : '—'],
                   ['Expires',      offer.expires_at ? new Date(offer.expires_at).toLocaleDateString() : '—'],
                   ['Email Sent',   offer.email_sent ? (offer.email_sent_at ? new Date(offer.email_sent_at).toLocaleDateString() : 'Yes') : 'No'],
-                ].map(([k, v]) => (
+                ].map(([k, v]) => k === 'Expires' ? (
+                  <div key={k}>
+                    <p className="text-xs text-muted-foreground">{k}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <input
+                        type="date"
+                        value={expiryDraft}
+                        onChange={(e) => { setExpiryDraft(e.target.value); setExpiryFeedback(null); }}
+                        aria-label="Expiry date"
+                        className="flex-1 min-w-0 px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-accent/20"
+                      />
+                      <button
+                        onClick={handleSaveExpiry}
+                        disabled={savingExpiry || !expiryDraft || expiryDraft === expiryInputDate(offer.expires_at)}
+                        className="px-3 py-1.5 text-xs font-medium rounded-md bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        {savingExpiry ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                    {expiryFeedback && (
+                      <p className={`text-xs mt-1 ${expiryFeedback.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {expiryFeedback.message}
+                      </p>
+                    )}
+                  </div>
+                ) : (
                   <div key={k}>
                     <p className="text-xs text-muted-foreground">{k}</p>
                     <p className="text-sm font-medium mt-0.5">{v}</p>

@@ -153,17 +153,25 @@ export default function Verify() {
     setSearchParams(tab === 'offer' ? { type: 'offer' } : {}, { replace: true });
   };
 
+  // Expired = stored status, or past deadline (Accepted offers stay verifiable —
+  // they were accepted before the deadline).
+  const isOfferExpired =
+    verifiedOffer?.status === 'Expired' ||
+    (!!verifiedOffer?.expires_at &&
+      new Date(verifiedOffer.expires_at) < new Date() &&
+      verifiedOffer.status !== 'Accepted');
+
   const offerStatusLabel = verifiedOffer?.status === 'Revoked'
     ? 'This offer has been revoked'
     : verifiedOffer?.status === 'Rejected'
     ? 'This offer was declined'
     : verifiedOffer?.status === 'Accepted'
     ? 'This offer has been accepted'
-    : verifiedOffer?.status === 'Expired'
+    : isOfferExpired
     ? 'This offer has expired'
     : 'This offer matches ZYR0&apos;s official record for this offer ID.';
 
-  const offerInactive = verifiedOffer && ['Revoked', 'Expired'].includes(verifiedOffer.status);
+  const offerInactive = !!verifiedOffer && (['Revoked', 'Expired'].includes(verifiedOffer.status) || isOfferExpired);
 
   const certRevoked = verifiedCert?.status === 'Revoked';
 
@@ -388,7 +396,7 @@ export default function Verify() {
                     <h3 className={`font-bold ${offerInactive ? 'text-amber-800 dark:text-amber-400' : 'text-emerald-800 dark:text-emerald-400'}`}>
                       {offerInactive ? 'Offer Found — Inactive' : 'Verified Authentic'}
                     </h3>
-                    <p className="text-xs text-emerald-700/80 dark:text-emerald-500/80">{offerStatusLabel}</p>
+                    <p className={`text-xs ${offerInactive ? 'text-amber-700/80 dark:text-amber-500/80' : 'text-emerald-700/80 dark:text-emerald-500/80'}`}>{offerStatusLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

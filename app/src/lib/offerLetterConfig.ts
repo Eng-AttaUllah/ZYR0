@@ -38,7 +38,7 @@ export const CANVAS_MARGIN = 64;
 export const DEFAULT_OFFER_TERMS = [
   'This offer is contingent upon verification of candidate credentials and completion of required onboarding paperwork.',
   'You are expected to maintain professional standards, confidentiality, and data safety during the internship.',
-  'This offer remains valid until the specified expiration date, after which it may expire automatically unless extended.',
+  'This offer expires automatically unless extended.',
 ];
 
 /** Build formatted detail fields array for both UI and Canvas */

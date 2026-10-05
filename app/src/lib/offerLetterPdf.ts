@@ -210,7 +210,7 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
 
   // Document metadata box (top right)
   const metaBoxW = 260;
-  const metaBoxH = 74;
+  const metaBoxH = 50;
   const metaBoxX = PAGE_WIDTH - MARGIN - metaBoxW;
 
   ctx.fillStyle = 'rgba(255,253,245,.72)';
@@ -220,14 +220,6 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
   roundRect(ctx, metaBoxX, y, metaBoxW, metaBoxH, 10);
   ctx.fill();
   ctx.stroke();
-
-  const issueDate = offer.issued_at
-    ? new Date(offer.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-    : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-  const expiryDate = offer.expires_at
-    ? new Date(offer.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-    : '30 Days';
 
   const metaLabel = (text: string, vx: number, vy: number, value: string, mono = false) => {
     ctx.fillStyle = '#a99a78';
@@ -241,10 +233,8 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
   };
 
   metaLabel('Offer Code', 94, y + 24, offer.offer_code || offer.id.slice(0, 12).toUpperCase(), true);
-  metaLabel('Issued', 90, y + 44, issueDate);
-  metaLabel('Expires', 98, y + 62, expiryDate);
 
-  y += 114;
+  y += 90;
 
   // Gold divider rule
   ctx.strokeStyle = GOLD;
@@ -358,7 +348,7 @@ export async function generateOfferLetterPdf(data: OfferLetterPdfData): Promise<
   let termList = [
     'This offer is contingent upon verification of candidate credentials and completion of required onboarding paperwork.',
     'You are expected to maintain professional standards, confidentiality, and data safety during the internship.',
-    `This offer remains valid until ${offer.expires_at ? new Date(offer.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '30 days from issuance'}, after which it may expire automatically unless extended.`,
+    'This offer expires automatically unless extended.',
   ];
 
   const respLines = (r: string) => measureWrapped(ctx, r, contentW - 24, RESP_FONT, RESP_LH, RESP_SP);
