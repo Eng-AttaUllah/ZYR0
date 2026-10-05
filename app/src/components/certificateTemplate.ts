@@ -271,17 +271,17 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .award-center .logo-top { height: 46px; margin-top: 2px; }
     .award-sub {
       text-align: center;
-      color: #1e40af;
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
+      color: #120159;
+      font-family: 'Agbalumo', cursive;
+      font-size: 21px;
+      font-weight: 400;
+      letter-spacing: .5px;
       margin-top: 5px;
     }
     .zyro-brand { text-align: right; }
-    .brand-main { font-size: 32px; font-weight: 800; color: #1e3a8a; letter-spacing: 2.5px; line-height: 1; }
+    .brand-main { font-family: 'Agbalumo', cursive; font-size: 34px; font-weight: 400; color: #120159; letter-spacing: 1px; line-height: 1; }
     .brand-main .brand-o { height: 34px; width: auto; display: inline-block; vertical-align: -5px; }
-    .brand-sub { font-size: 10px; font-weight: 700; color: #333; letter-spacing: 2px; margin-top: 2px; text-transform: uppercase; }
+    .brand-sub { font-family: 'Agbalumo', cursive; font-size: 13px; font-weight: 400; color: #120159; letter-spacing: .5px; margin-top: 4px; }
     .brand-sub b { color: #a1262a; font-weight: 800; }
 
     /* ── Title block ─────────────────────────────────────────────────── */
@@ -375,14 +375,13 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     .seal-qr { display: flex; align-items: center; gap: 20px; }
     .seal-col { display: flex; flex-direction: column; align-items: center; }
     .seal-gold {
-      width: 82px;
-      height: 82px;
+      width: 141px;
+      height: 141px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .seal-gold img, .seal-gold svg { width: 100%; height: 100%; object-fit: contain; display: block; }
-    .badge-text { font-family: 'Cinzel', serif; font-size: 11px; font-weight: 700; margin-top: 5px; color: #b89c56; letter-spacing: 1.5px; line-height: 1; }
     .qr { display: flex; flex-direction: column; align-items: center; gap: 4px; }
     .qr-img { width: 72px; height: 72px; padding: 3px; background: #fff; border: 1px solid #d8d2c2; display: block; }
     .qr-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #4a4a4a; line-height: 1; }
@@ -402,7 +401,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
     <title>Certificate - ${recipientName}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600;800&family=Playfair+Display:ital,wght@1,600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Agbalumo&family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600;800&family=Playfair+Display:ital,wght@1,600&display=swap" />
     <style>
       ${fontCss ?? ''}
       ${css}
@@ -451,8 +450,8 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
             </div>
 
             <div class="body-text">
-              <p>In recognition of the successful completion of the <b class="internship-title">${internshipTitle}</b> at ZYRO in collaboration with <b class="company-name">${companyName}</b> from <b class="cert-dates">${dates}</b>.</p>
-              <p>Throughout the internship, the candidate consistently demonstrated technical competence, initiative, and responsibility in executing all project deliverables. Congratulations on this milestone and thank you for your meaningful contributions throughout your time with the team.</p>
+              <p>In recognition of the successful completion of the <b class="internship-title">${internshipTitle}</b> at <b class="company-name">${companyName}</b>, verified against the official ZYRO credential registry, from <b class="cert-dates">${dates}</b>.</p>
+              <p>Throughout the internship, the candidate consistently demonstrated technical competence, proactivity, and responsibility in executing all project deliverables. Congratulations on this milestone and thank you for your meaningful contributions throughout your time with the team.</p>
             </div>
           </div>
 
@@ -482,7 +481,6 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
                       <text x="40" y="44" text-anchor="middle" font-family="Cinzel, serif" font-size="11" font-weight="700" letter-spacing="1.6" fill="#fffaf0">ZYRO</text>
                     </svg>`}
                   </div>
-                  <div class="badge-text">VERIFIED SECURE</div>
                 </div>
                 <div class="qr">
                   <img class="qr-img" src="${qrSrc}" alt="Verification QR" width="68" height="68" />
@@ -494,7 +492,7 @@ export function buildCertificateHTML(opts: CertificateTemplateOptions): string {
             <div class="sig-block">
               <div class="sig-line" aria-hidden="true">${dirSigSrc ? `<img class="sig-img" src="${dirSigSrc}" alt="" />` : ''}</div>
               <div class="sig-title">ZYRO Director</div>
-              <div class="sig-company">ZYRO Organization</div>
+              <div class="sig-company">ZYRO</div>
             </div>
           </div>
         </div>

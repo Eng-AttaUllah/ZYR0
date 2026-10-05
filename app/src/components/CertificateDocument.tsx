@@ -60,13 +60,13 @@ export default function CertificateDocument({ certificate }: CertificateDocument
 
   // Real internship period: certificate snapshot → internship → placeholder.
   const formatDate = (d?: string | null) => d
-    ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
     : null;
   const periodStart = certificate.start_date || certificate.internship?.start_date || null;
   const periodEnd = certificate.end_date || certificate.internship?.end_date || null;
   const dates = periodStart && periodEnd
-    ? `${formatDate(periodStart)}, to ${formatDate(periodEnd)}`
-    : '[Insert Dates, e.g., Month Day, Year, to Month Day, Year]';
+    ? `${formatDate(periodStart)} – ${formatDate(periodEnd)}`
+    : '[Insert Dates, e.g., August 2025 – October 2025]';
 
   const qrCodeUrl = useMemo(() => {
     const verifyUrl = `${window.location.origin}/verify/${certificate.credential_id}`;
@@ -94,7 +94,7 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     o: `${window.location.origin}/zyro-logo.png`,
     sig: `${window.location.origin}/signatures/program-coordinator.png`,
     dirSig: `${window.location.origin}/signatures/director.png`,
-    seal: `${window.location.origin}/seal.png`,
+    seal: `${window.location.origin}/seal_ZYR0.png`,
   }), []);
   const logoRefs = {
     watermark: watermarkDataUrlRef,
@@ -121,7 +121,8 @@ export default function CertificateDocument({ certificate }: CertificateDocument
     }
 
     const FONTS_CSS_URL =
-      'https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700' +
+      'https://fonts.googleapis.com/css2?family=Agbalumo' +
+      '&family=Cinzel:wght@500;700' +
       '&family=Montserrat:wght@300;400;600;800' +
       '&family=Playfair+Display:ital,wght@1,600&display=swap';
 
