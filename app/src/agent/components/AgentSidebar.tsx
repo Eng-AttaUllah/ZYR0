@@ -8,6 +8,23 @@ export interface SidebarHistoryItem {
   time: string;
 }
 
+/**
+ * ZYRO Studio mark, cropped to the circular "O" so the wordmark baked into
+ * `/logos/studio.png` (which would be illegible at sidebar sizes) is clipped out.
+ */
+function StudioLogo({ className }: { className?: string }) {
+  return (
+    <span className={`relative block overflow-hidden ${className ?? 'size-7'}`} aria-hidden="true">
+      <img
+        src="/logos/studio.png"
+        alt=""
+        className="absolute top-0 left-1/2 w-[135%] max-w-none -translate-x-1/2"
+        draggable={false}
+      />
+    </span>
+  );
+}
+
 export function AgentSidebar({
   open,
   onToggle,
@@ -53,9 +70,13 @@ export function AgentSidebar({
         <div className="flex items-center justify-between p-3 border-b border-white/5">
           {open ? (
             <>
-              <span className="text-sm font-semibold text-white tracking-tight">ZYROO</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <StudioLogo className="size-7 shrink-0" />
+                <span className="text-sm font-semibold text-white tracking-tight">ZYR0</span>
+              </span>
               <button
                 onClick={onToggle}
+                aria-label="Close sidebar"
                 className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors lg:hidden"
               >
                 <ChevronLeft className="size-4" />
@@ -64,12 +85,11 @@ export function AgentSidebar({
           ) : (
             <button
               onClick={onToggle}
-              className="size-7 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors mx-auto"
+              aria-label="Open sidebar"
+              title="ZYRO Studio"
+              className="size-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors mx-auto"
             >
-              <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <path d="M9 3v18" />
-              </svg>
+              <StudioLogo className="size-4" />
             </button>
           )}
         </div>
