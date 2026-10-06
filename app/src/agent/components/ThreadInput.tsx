@@ -5,7 +5,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Zap, SendHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { AgentModelInfo } from '@/agent/core/types'
+import type { AgentAttachment, AgentModelInfo } from '@/agent/core/types'
 import type { ResearchDepth } from '@/agent/research/types'
 
 // ----------------------------------------------------------------------
@@ -261,7 +261,7 @@ export interface ThreadInputProps {
   onSelectModel: (id: string) => void
   depth: ResearchDepth
   onDepthChange: (d: ResearchDepth) => void
-  onSend: (text: string) => void
+  onSend: (text: string, attachments: AgentAttachment[]) => void
   onStop: () => void
   running: boolean
   disabled?: boolean
@@ -514,7 +514,8 @@ export function ThreadInput({
   const handleSubmit = () => {
     if (value.trim() === '' && !hasAttachments) return
     setIsSmoothResize(false)
-    onSend(value)
+    // Forward the attachments with the message so they are not silently dropped.
+    onSend(value, attachments.map(({ id, name, url }) => ({ id, name, url })))
     handleValueChange('')
     attachments.forEach((a) => URL.revokeObjectURL(a.url))
     setAttachments([])

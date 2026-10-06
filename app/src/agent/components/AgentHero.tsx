@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Zap, SendHorizontal, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { AgentModelInfo } from '@/agent/core/types'
+import type { AgentAttachment, AgentModelInfo } from '@/agent/core/types'
 import type { ResearchDepth } from '@/agent/research/types'
 
 // ----------------------------------------------------------------------
@@ -91,7 +91,7 @@ function ChatInput({
   models: AgentModelInfo[]
   selectedModel: string | null
   onSelectModel: (id: string) => void
-  onSend?: (message: string) => void
+  onSend?: (message: string, attachments?: AgentAttachment[]) => void
   onStop?: () => void
   running?: boolean
   depth: ResearchDepth
@@ -478,7 +478,7 @@ interface AgentHeroProps {
   models: AgentModelInfo[]
   selectedModel: string | null
   onSelectModel: (id: string) => void
-  onSend: (message: string) => void
+  onSend: (message: string, attachments?: AgentAttachment[]) => void
   onStop?: () => void
   running?: boolean
   depth: ResearchDepth

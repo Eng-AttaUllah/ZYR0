@@ -10,6 +10,7 @@ import { useResearchPipeline } from '@/agent/hooks/useResearchPipeline';
 import { renderReportMarkdown } from '@/agent/render/renderReportMarkdown';
 import { generateReportPdf } from '@/agent/lib/reportPdf';
 import type { ResearchDepth, ResearchReport } from '@/agent/research/types';
+import type { AgentAttachment } from '@/agent/core/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { classifyLocally } from '@/agent/classifyLocally';
 import supabase from '@/lib/supabase';
@@ -41,6 +42,17 @@ interface HistoryItem {
   status: string;
   mode: string;
   created_at: string;
+}
+
+// The gateway is text-only, so attached file bytes never reach the model.
+// We surface the file names in the message and tell the model not to guess
+// at contents it cannot see.
+const ATTACHMENT_SYSTEM_NOTE = `- The user may attach files. Only the file names are shared with you — never describe, quote or assume the contents of a file you cannot actually see.`;
+
+function composeAttachmentMessage(text: string, attachments: AgentAttachment[]): string {
+  const body = text.trim() || 'Please review the attached file(s).';
+  const names = attachments.map((a) => a.name).join(', ');
+  return `${body}\n\n📎 Attached: ${names}`;
 }
 
 function timeAgo(dateStr: string): string {
@@ -124,7 +136,13 @@ export default function ResearchAgentPage() {
     }
   };
 
-  const handleSend = (text: string) => {
+  const handleSend = (text: string, attachments: AgentAttachment[] = []) => {
+    if (attachments.length > 0) {
+      // Attachments only make sense on the chat path: the research pipeline
+      // cannot read files, so routing them there would drop them silently.
+      send(composeAttachmentMessage(text, attachments), `${chatSystem}\n${ATTACHMENT_SYSTEM_NOTE}`);
+      return;
+    }
     if (mode === 'research') {
       // Smart routing: greetings and casual messages go to chat, not research.
       const decision = classifyLocally(text);
