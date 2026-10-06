@@ -21,6 +21,9 @@ const SYSTEM_PROMPT = `You are ZYR0's Research Agent: a precise, honest research
 - Keep answers well-structured with markdown when it helps clarity.
 - Never fabricate sources or facts.`;
 
+// How close to the bottom (px) the thread must be before we resume following it.
+const STICK_TO_BOTTOM_PX = 100;
+
 function buildFollowUpPrompt(report: ResearchReport): string {
   const sources = report.ledger
     .map((entry) => `[${entry.key}] ${entry.title} — ${entry.sourceName} — ${entry.url}`)
@@ -84,6 +87,37 @@ export default function ResearchAgentPage() {
     pipeline.stage !== 'idle' || pipeline.review !== null || pipeline.report !== null;
   const isEmpty = messages.length === 0 && !runActive;
 
+  // --- Thread auto-scroll -------------------------------------------------
+  // The thread follows the reply only while the user is parked at the bottom.
+  // A mouse-wheel or touch drag away from the bottom immediately pauses
+  // following, so the reply can keep streaming while the user reads further
+  // up; scrolling back down to the bottom resumes it.
+  const threadRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
+  const lastScrollTopRef = useRef(0);
+
+  const handleThreadScroll = useCallback(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    const scrolledUp = el.scrollTop < lastScrollTopRef.current - 1;
+    lastScrollTopRef.current = el.scrollTop;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom <= STICK_TO_BOTTOM_PX) {
+      stickToBottomRef.current = true;
+    } else if (scrolledUp) {
+      // User is reading back through the thread — leave them alone.
+      stickToBottomRef.current = false;
+    }
+  }, []);
+
+  // No dependency array on purpose: this must also run for every streaming
+  // token, evidence update and report chunk (each one re-renders this page).
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el || !stickToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  });
+
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     const { data } = await supabase
@@ -106,11 +140,13 @@ export default function ResearchAgentPage() {
 
   const handleResearchSend = (topic: string, runDepth: ResearchDepth = depth) => {
     setMode('research');
+    stickToBottomRef.current = true;
     void pipeline.run(topic, runDepth);
   };
 
   const handleRegenerate = (topic: string) => {
     setMode('research');
+    stickToBottomRef.current = true;
     void pipeline.run(topic);
   };
 
@@ -123,6 +159,7 @@ export default function ResearchAgentPage() {
 
   const handleSelectHistory = async (id: string, itemMode: string) => {
     setRestoring(true);
+    stickToBottomRef.current = true;
     try {
       if (itemMode === 'research') {
         setMode('research');
@@ -137,6 +174,8 @@ export default function ResearchAgentPage() {
   };
 
   const handleSend = (text: string, attachments: AgentAttachment[] = []) => {
+    // A new message always starts pinned to the latest content.
+    stickToBottomRef.current = true;
     if (attachments.length > 0) {
       // Attachments only make sense on the chat path: the research pipeline
       // cannot read files, so routing them there would drop them silently.
@@ -250,7 +289,11 @@ export default function ResearchAgentPage() {
           </div>
 
           {/* Thread area */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div
+            ref={threadRef}
+            onScroll={handleThreadScroll}
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
+          >
             <div className="mx-auto max-w-3xl px-4 py-6 flex flex-col gap-4">
               {/* Restoring indicator */}
               {restoring && (
