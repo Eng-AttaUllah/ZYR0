@@ -77,7 +77,8 @@ export function AgentSidebar({
               <button
                 onClick={onToggle}
                 aria-label="Close sidebar"
-                className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors lg:hidden"
+                title="Close sidebar"
+                className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <ChevronLeft className="size-4" />
               </button>
