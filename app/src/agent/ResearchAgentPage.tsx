@@ -310,15 +310,6 @@ export default function ResearchAgentPage() {
                     <path d="M9 3v18" />
                   </svg>
                 </button>
-                <button
-                  onClick={handleNewSession}
-                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-medium text-[#8a8a8f] hover:text-white hover:bg-white/5 border border-white/5 transition-all duration-200 active:scale-95"
-                >
-                  <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  <span className="hidden sm:inline">New</span>
-                </button>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[#5a5a5f]'}`} />
