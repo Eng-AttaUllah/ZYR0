@@ -118,6 +118,47 @@ export default function ResearchAgentPage() {
     el.scrollTop = el.scrollHeight;
   });
 
+  // Pause following the instant the user gestures to read back (wheel up, or
+  // finger dragged down). Inferring intent from the async scroll event loses
+  // the race against a streaming render, which would snap the view straight
+  // back to the bottom before the scroll handler could flip the flag.
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el) return;
+
+    let lastTouchY: number | null = null;
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) stickToBottomRef.current = false;
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      lastTouchY = e.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY;
+      if (y == null || lastTouchY == null) return;
+      // Finger dragged down = content moving up = reading back through the thread.
+      if (y - lastTouchY > 4) stickToBottomRef.current = false;
+      lastTouchY = y;
+    };
+    const onTouchEnd = () => {
+      lastTouchY = null;
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchmove', onTouchMove, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+    // The thread mounts/unmounts when isEmpty flips between hero and thread.
+  }, [isEmpty]);
+
   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     const { data } = await supabase
@@ -292,6 +333,7 @@ export default function ResearchAgentPage() {
           <div
             ref={threadRef}
             onScroll={handleThreadScroll}
+            data-lenis-prevent=""
             className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
           >
             <div className="mx-auto max-w-3xl px-4 py-6 flex flex-col gap-4">

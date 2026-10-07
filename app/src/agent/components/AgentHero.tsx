@@ -500,7 +500,7 @@ export function AgentHero({
   onToggleSidebar,
 }: AgentHeroProps) {
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden bg-[#0f0f0f]">
+    <div className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden bg-[#0f0f0f]" data-lenis-prevent="">
       <RayBackground />
 
       {onToggleSidebar && (
