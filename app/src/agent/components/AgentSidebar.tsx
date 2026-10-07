@@ -88,7 +88,7 @@ export function AgentSidebar({
             <>
               <span className="flex min-w-0 items-center gap-2">
                 <StudioLogo className="size-7 shrink-0" />
-                <span className="text-sm font-semibold text-white tracking-tight">ZYR0</span>
+                <span className="text-sm font-semibold text-white tracking-tight">ZYR0 Research</span>
               </span>
               <button
                 onClick={onToggle}
