@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { History, Plus, Settings, ChevronLeft, Search, MessageSquare, FileText } from 'lucide-react';
+import { History, Plus, Settings, ChevronLeft, ChevronRight, Search, MessageSquare, FileText } from 'lucide-react';
 
 export interface SidebarHistoryItem {
   id: string;
@@ -58,6 +58,18 @@ export function AgentSidebar({
         />
       )}
 
+      {/* Opener while the sidebar is closed (mobile: the rail itself is hidden) */}
+      {!open && (
+        <button
+          onClick={onToggle}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+          className="fixed top-3 left-3 z-40 size-9 lg:hidden flex items-center justify-center rounded-lg border border-white/10 bg-[#111113]/80 backdrop-blur-sm text-[#8a8a8f] hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      )}
+
       {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#111113] border-r border-white/5 transition-all duration-300 ease-out max-w-[85vw] ${
@@ -67,7 +79,11 @@ export function AgentSidebar({
         }`}
       >
         {/* Top section */}
-        <div className="flex items-center justify-between p-3 border-b border-white/5">
+        <div
+          className={`flex border-b border-white/5 ${
+            open ? 'items-center justify-between p-3' : 'flex-col items-center gap-1 p-2'
+          }`}
+        >
           {open ? (
             <>
               <span className="flex min-w-0 items-center gap-2">
@@ -84,14 +100,24 @@ export function AgentSidebar({
               </button>
             </>
           ) : (
-            <button
-              onClick={onToggle}
-              aria-label="Open sidebar"
-              title="ZYRO Studio"
-              className="size-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors mx-auto"
-            >
-              <StudioLogo className="size-4" />
-            </button>
+            <>
+              <button
+                onClick={onToggle}
+                aria-label="Open sidebar"
+                title="Open sidebar"
+                className="size-7 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+              <button
+                onClick={onToggle}
+                aria-label="ZYRO Studio"
+                title="ZYRO Studio"
+                className="size-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <StudioLogo className="size-5" />
+              </button>
+            </>
           )}
         </div>
 

@@ -289,7 +289,6 @@ export default function ResearchAgentPage() {
           depth={depth}
           onDepthChange={setDepth}
           onOpenHistory={() => setSidebarOpen(true)}
-          onToggleSidebar={() => setSidebarOpen((v) => !v)}
         />
         </m.div>
       ) : (
@@ -302,25 +301,13 @@ export default function ResearchAgentPage() {
         >
           {/* Active session header */}
           <div className="shrink-0 border-b border-white/5 px-4 py-3">
-            <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => setSidebarOpen((v) => !v)}
-                  className="flex items-center justify-center size-10 rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <path d="M9 3v18" />
-                  </svg>
-                </button>
-              </div>
+            <div className="mx-auto max-w-3xl flex items-center gap-3">
+              <div className="flex-1" />
 
               {/* Chat / Research — top of the chat bar */}
-              <div className="flex flex-1 min-w-0 justify-center">
-                <ModeToggle mode={mode} onModeChange={setMode} />
-              </div>
+              <ModeToggle mode={mode} onModeChange={setMode} />
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-1 min-w-0 items-center justify-end gap-2">
                 <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[#5a5a5f]'}`} />
                 <span className="text-xs text-[#5a5a5f]">
                   {pipeline.running ? 'Researching...' : streaming ? 'Generating...' : 'Ready'}
