@@ -93,8 +93,8 @@ function StopIcon() {
 
 function PlusIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <svg width="18" height="18" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
     </svg>
   )
 }
@@ -781,7 +781,9 @@ export function ThreadInput({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={openFileChooser}
                   disabled={attachments.length >= maxAttachments}
-                  className="ml-auto flex size-7 items-center justify-center rounded-full text-white/50 transition-all duration-200 hover:bg-white/5 hover:text-white outline-none disabled:opacity-40 disabled:pointer-events-none"
+                  aria-label="Add photos"
+                  title="Add photos"
+                  className="ml-auto mr-2 flex size-9 items-center justify-center rounded-full bg-white text-[#0f0f0f] shadow-lg shadow-black/40 transition-all duration-200 hover:bg-white/90 hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   <PlusIcon />
                 </button>
