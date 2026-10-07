@@ -255,7 +255,6 @@ function AttachmentGalleryModal({
 // ----------------------------------------------------------------------
 export interface ThreadInputProps {
   mode: 'chat' | 'research'
-  onModeChange: (m: 'chat' | 'research') => void
   models: AgentModelInfo[]
   selectedModel: string | null
   onSelectModel: (id: string) => void
@@ -270,7 +269,6 @@ export interface ThreadInputProps {
 
 export function ThreadInput({
   mode,
-  onModeChange,
   models,
   selectedModel,
   onSelectModel,
@@ -585,34 +583,6 @@ export function ThreadInput({
     <>
       <div className="shrink-0 px-4 pt-2 pb-6">
         <div className="mx-auto max-w-3xl">
-          {/* Mode Toggle — above the composer (ChatGPT-style) */}
-          <div className="flex justify-center mb-2.5">
-            <div className="flex rounded-full border border-white/10 bg-[#1a1a1e]/60 text-xs overflow-hidden">
-              <button
-                type="button"
-                onClick={() => onModeChange('chat')}
-                aria-pressed={mode === 'chat'}
-                className={cn(
-                  'px-4 py-1.5 transition-all duration-150',
-                  mode === 'chat' ? 'bg-white/10 text-white' : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
-                )}
-              >
-                Chat
-              </button>
-              <button
-                type="button"
-                onClick={() => onModeChange('research')}
-                aria-pressed={mode === 'research'}
-                className={cn(
-                  'px-4 py-1.5 transition-all duration-150',
-                  mode === 'research' ? 'bg-white/10 text-white' : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
-                )}
-              >
-                Research
-              </button>
-            </div>
-          </div>
-
           {/* Outer Wrapper */}
           <div
             ref={(node) => {

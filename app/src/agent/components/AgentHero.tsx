@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Zap, SendHorizontal, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ModeToggle, type AgentMode } from '@/agent/components/ModeToggle'
 import type { AgentAttachment, AgentModelInfo } from '@/agent/core/types'
 import type { ResearchDepth } from '@/agent/research/types'
 
@@ -477,6 +478,8 @@ function RayBackground() {
 interface AgentHeroProps {
   models: AgentModelInfo[]
   selectedModel: string | null
+  mode: AgentMode
+  onModeChange: (m: AgentMode) => void
   onSelectModel: (id: string) => void
   onSend: (message: string, attachments?: AgentAttachment[]) => void
   onStop?: () => void
@@ -490,6 +493,8 @@ interface AgentHeroProps {
 export function AgentHero({
   models,
   selectedModel,
+  mode,
+  onModeChange,
   onSelectModel,
   onSend,
   onStop,
@@ -524,6 +529,13 @@ export function AgentHero({
           <span className="hidden sm:inline">History</span>
         </button>
       )}
+
+      {/* Chat / Research — top of the chat bar */}
+      <ModeToggle
+        mode={mode}
+        onModeChange={onModeChange}
+        className="absolute top-5 left-1/2 z-30 -translate-x-1/2"
+      />
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full px-4">
         <div className="text-center mb-6">

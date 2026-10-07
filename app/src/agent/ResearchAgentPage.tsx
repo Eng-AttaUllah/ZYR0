@@ -4,6 +4,7 @@ import { AgentHero } from '@/agent/components/AgentHero';
 import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
 import { AgentSidebar, type SidebarHistoryItem } from '@/agent/components/AgentSidebar';
+import { ModeToggle } from '@/agent/components/ModeToggle';
 import { useAgentChat } from '@/agent/hooks/useAgentChat';
 import { useAgentModels } from '@/agent/hooks/useAgentModels';
 import { useResearchPipeline } from '@/agent/hooks/useResearchPipeline';
@@ -279,6 +280,8 @@ export default function ResearchAgentPage() {
         <AgentHero
           models={models}
           selectedModel={selected}
+          mode={mode}
+          onModeChange={setMode}
           onSelectModel={(id) => setSelected(id === 'auto' ? null : id)}
           onSend={handleSend}
           onStop={abort}
@@ -299,8 +302,8 @@ export default function ResearchAgentPage() {
         >
           {/* Active session header */}
           <div className="shrink-0 border-b border-white/5 px-4 py-3">
-            <div className="mx-auto max-w-3xl flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setSidebarOpen((v) => !v)}
                   className="flex items-center justify-center size-10 rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
@@ -311,7 +314,13 @@ export default function ResearchAgentPage() {
                   </svg>
                 </button>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Chat / Research — top of the chat bar */}
+              <div className="flex flex-1 min-w-0 justify-center">
+                <ModeToggle mode={mode} onModeChange={setMode} />
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
                 <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[#5a5a5f]'}`} />
                 <span className="text-xs text-[#5a5a5f]">
                   {pipeline.running ? 'Researching...' : streaming ? 'Generating...' : 'Ready'}
@@ -459,7 +468,6 @@ export default function ResearchAgentPage() {
           {/* Bottom input */}
           <ThreadInput
             mode={mode}
-            onModeChange={setMode}
             models={models}
             selectedModel={selected}
             onSelectModel={(id) => setSelected(id === 'auto' ? null : id)}
