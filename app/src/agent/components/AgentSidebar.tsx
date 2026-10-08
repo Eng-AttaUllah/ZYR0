@@ -128,7 +128,13 @@ export function AgentSidebar({
   historyLoading?: boolean;
 }) {
   const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(true);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearch('');
+  };
 
   const filtered = (historyItems ?? []).filter((item) =>
     item.title.toLowerCase().includes(search.toLowerCase())
@@ -176,14 +182,31 @@ export function AgentSidebar({
                 <ResearchLogo className="size-7 shrink-0" />
                 <span className="text-sm font-semibold text-white tracking-tight">ZYR0 Research</span>
               </span>
-              <button
-                onClick={onToggle}
-                aria-label="Close sidebar"
-                title="Close sidebar"
-                className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen((v) => !v)}
+                  aria-label="Search chats"
+                  aria-expanded={searchOpen}
+                  aria-controls="agent-sidebar-search"
+                  title="Search chats"
+                  className={`size-10 flex items-center justify-center rounded-lg transition-colors ${
+                    searchOpen
+                      ? 'bg-white/10 text-white'
+                      : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Search className="size-4" />
+                </button>
+                <button
+                  onClick={onToggle}
+                  aria-label="Close sidebar"
+                  title="Close sidebar"
+                  className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+              </div>
             </>
           ) : (
             <>
@@ -230,6 +253,26 @@ export function AgentSidebar({
         {/* Expanded content */}
         {open && (
           <div className="flex flex-col flex-1 min-h-0">
+            {/* Search — revealed by the top-bar button */}
+            {searchOpen && (
+              <div id="agent-sidebar-search" className="px-3 pt-3">
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/5 focus-within:border-white/20 transition-colors">
+                  <Search className="size-3.5 text-[#5a5a5f]" />
+                  <input
+                    autoFocus
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') closeSearch();
+                    }}
+                    placeholder="Search history..."
+                    aria-label="Search history"
+                    className="flex-1 bg-transparent text-sm text-white placeholder-[#5a5a5f] outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* New Chat button */}
             <div className="p-3">
               <button
@@ -239,19 +282,6 @@ export function AgentSidebar({
                 <Plus className="size-4" />
                 New Chat
               </button>
-            </div>
-
-            {/* Search */}
-            <div className="px-3 pb-2">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/5">
-                <Search className="size-3.5 text-[#5a5a5f]" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search history..."
-                  className="flex-1 bg-transparent text-sm text-white placeholder-[#5a5a5f] outline-none"
-                />
-              </div>
             </div>
 
             {/* Recent — collapsible dropdown */}
