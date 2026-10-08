@@ -5,6 +5,7 @@ import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
 import { AgentSidebar, type SidebarHistoryItem } from '@/agent/components/AgentSidebar';
 import { ModeToggle } from '@/agent/components/ModeToggle';
+import { TemporaryToggle } from '@/agent/components/TemporaryToggle';
 import { useAgentChat } from '@/agent/hooks/useAgentChat';
 import { useAgentModels } from '@/agent/hooks/useAgentModels';
 import { useResearchPipeline } from '@/agent/hooks/useResearchPipeline';
@@ -74,8 +75,12 @@ function timeAgo(dateStr: string): string {
 export default function ResearchAgentPage() {
   const { user } = useAuth();
   const { models, selected, setSelected, loading } = useAgentModels();
-  const { messages, streaming, error, sessionId, send, abort, resetSession, loadSession } = useAgentChat(selected);
-  const pipeline = useResearchPipeline();
+  // Temporary chat: while it is on, neither hook writes to history — no
+  // session row, no messages, no saved research run.
+  const [temporary, setTemporary] = useState(false);
+  const persistHistory = !temporary;
+  const { messages, streaming, error, sessionId, send, abort, resetSession, loadSession } = useAgentChat(selected, persistHistory);
+  const pipeline = useResearchPipeline(persistHistory);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [chatSystem, setChatSystem] = useState(SYSTEM_PROMPT);
   const [mode, setMode] = useState<'chat' | 'research'>('chat');
@@ -199,6 +204,18 @@ export default function ResearchAgentPage() {
     setMode('chat');
   };
 
+  // Flipping the switch starts a clean conversation in both directions:
+  // the temporary thread never leaks into history, and leaving temporary
+  // mode does not carry the unsaved thread along.
+  const handleToggleTemporary = () => {
+    setTemporary((v) => !v);
+    resetSession();
+    pipeline.clear();
+    setChatSystem(SYSTEM_PROMPT);
+    setMode('chat');
+    setRestoring(false);
+  };
+
   const handleSelectHistory = async (id: string, itemMode: string) => {
     setRestoring(true);
     stickToBottomRef.current = true;
@@ -282,6 +299,8 @@ export default function ResearchAgentPage() {
           selectedModel={selected}
           mode={mode}
           onModeChange={setMode}
+          temporary={temporary}
+          onToggleTemporary={handleToggleTemporary}
           onSelectModel={(id) => setSelected(id === 'auto' ? null : id)}
           onSend={handleSend}
           onStop={abort}
@@ -302,7 +321,9 @@ export default function ResearchAgentPage() {
           {/* Active session header */}
           <div className="shrink-0 border-b border-white/5 px-4 py-3">
             <div className="mx-auto max-w-3xl flex items-center gap-3">
-              <div className="flex-1" />
+              <div className="flex flex-1 min-w-0 items-center">
+                <TemporaryToggle active={temporary} onToggle={handleToggleTemporary} />
+              </div>
 
               {/* Chat / Research — top of the chat bar */}
               <ModeToggle mode={mode} onModeChange={setMode} />

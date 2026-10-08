@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Zap, SendHorizontal, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModeToggle, type AgentMode } from '@/agent/components/ModeToggle'
+import { TemporaryToggle } from '@/agent/components/TemporaryToggle'
 import type { AgentAttachment, AgentModelInfo } from '@/agent/core/types'
 import type { ResearchDepth } from '@/agent/research/types'
 
@@ -480,6 +481,8 @@ interface AgentHeroProps {
   selectedModel: string | null
   mode: AgentMode
   onModeChange: (m: AgentMode) => void
+  temporary: boolean
+  onToggleTemporary: () => void
   onSelectModel: (id: string) => void
   onSend: (message: string, attachments?: AgentAttachment[]) => void
   onStop?: () => void
@@ -494,6 +497,8 @@ export function AgentHero({
   selectedModel,
   mode,
   onModeChange,
+  temporary,
+  onToggleTemporary,
   onSelectModel,
   onSend,
   onStop,
@@ -505,6 +510,13 @@ export function AgentHero({
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden bg-[#0f0f0f]" data-lenis-prevent="">
       <RayBackground />
+
+      {/* Temporary chat — top left */}
+      <TemporaryToggle
+        active={temporary}
+        onToggle={onToggleTemporary}
+        className="absolute top-5 left-5 z-30"
+      />
 
       {onOpenHistory && (
         <button
