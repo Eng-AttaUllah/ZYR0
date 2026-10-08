@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { History, Plus, Settings, ChevronLeft, ChevronRight, ChevronDown, Search, MessageSquare, FileText } from 'lucide-react';
+import { History, Plus, Settings, ChevronLeft, ChevronRight, ChevronDown, Search } from 'lucide-react';
 
 export interface SidebarHistoryItem {
   id: string;
@@ -56,6 +56,55 @@ function RecentIcon({ className }: { className?: string }) {
         <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
         <path d="M3 3v5h5" />
         <path d="M12 7.5v4.8l3.4 1.9" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Per-item marks for the Recent list — same gradient-stroke + glow language as
+ * RecentIcon, in two colourways so a research report is told apart from a plain
+ * chat at a glance (blue→violet for research, emerald→blue for chat).
+ */
+function ResearchItemIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="research-item-grad" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#4da5fc" />
+          <stop offset="1" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <g
+        stroke="url(#research-item-grad)"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+        <path d="M14 3v5h5" />
+        <path d="M9 13.5h6" />
+      </g>
+    </svg>
+  );
+}
+
+function ChatItemIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="chat-item-grad" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#34d399" />
+          <stop offset="1" stopColor="#4da5fc" />
+        </linearGradient>
+      </defs>
+      <g
+        stroke="url(#chat-item-grad)"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
       </g>
     </svg>
   );
@@ -248,9 +297,9 @@ export function AgentSidebar({
                           }`}
                         >
                           {item.mode === 'research' ? (
-                            <FileText className="size-3.5 mt-0.5 shrink-0 text-blue-400" />
+                            <ResearchItemIcon className="size-3.5 mt-0.5 shrink-0 drop-shadow-[0_0_3px_rgba(77,165,252,0.45)]" />
                           ) : (
-                            <MessageSquare className="size-3.5 mt-0.5 shrink-0 text-[#6a6a6f]" />
+                            <ChatItemIcon className="size-3.5 mt-0.5 shrink-0 drop-shadow-[0_0_3px_rgba(52,211,153,0.45)]" />
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm truncate">{item.title}</p>
