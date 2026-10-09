@@ -433,7 +433,7 @@ export function AgentSettingsModal({
                     checked={startTemporary}
                     onCheckedChange={onStartTemporaryChange}
                     aria-label="Start new chats in temporary mode"
-                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc]! bg-[var(--ag-switch)]!"
+                    className="h-5 w-9"
                   />
                 </Row>
                 <Row
@@ -474,7 +474,7 @@ export function AgentSettingsModal({
                     checked={skipReview}
                     onCheckedChange={onSkipReviewChange}
                     aria-label="Run plans automatically"
-                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc]! bg-[var(--ag-switch)]!"
+                    className="h-5 w-9"
                   />
                 </Row>
               </>
