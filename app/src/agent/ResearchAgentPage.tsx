@@ -4,6 +4,7 @@ import { AgentHero } from '@/agent/components/AgentHero';
 import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
 import { AgentSidebar, type SidebarHistoryItem } from '@/agent/components/AgentSidebar';
+import { AgentSettingsModal } from '@/agent/components/AgentSettingsModal';
 import { ModeToggle } from '@/agent/components/ModeToggle';
 import { TemporaryToggle } from '@/agent/components/TemporaryToggle';
 import { useAgentChat } from '@/agent/hooks/useAgentChat';
@@ -15,6 +16,16 @@ import type { ResearchDepth, ResearchReport } from '@/agent/research/types';
 import type { AgentAttachment } from '@/agent/core/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { classifyLocally } from '@/agent/classifyLocally';
+import {
+  clearPreferences,
+  readDefaultDepth,
+  readDefaultMode,
+  readStartTemporary,
+  writeDefaultDepth,
+  writeDefaultMode,
+  writeStartTemporary,
+  type AgentMode,
+} from '@/agent/lib/preferences';
 import supabase from '@/lib/supabase';
 import '@/styles/agent.css';
 
@@ -75,15 +86,20 @@ function timeAgo(dateStr: string): string {
 export default function ResearchAgentPage() {
   const { user } = useAuth();
   const { models, selected, setSelected, loading } = useAgentModels();
+  // Preferences restored from the Settings panel (localStorage, see
+  // @/agent/lib/preferences): they decide how a *new* workspace starts.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [defaultMode, setDefaultMode] = useState<AgentMode>(() => readDefaultMode());
+  const [startTemporary, setStartTemporary] = useState(() => readStartTemporary());
   // Temporary chat: while it is on, neither hook writes to history — no
   // session row, no messages, no saved research run.
-  const [temporary, setTemporary] = useState(false);
+  const [temporary, setTemporary] = useState(() => readStartTemporary());
   const persistHistory = !temporary;
   const { messages, streaming, error, sessionId, send, abort, resetSession, loadSession } = useAgentChat(selected, persistHistory);
   const pipeline = useResearchPipeline(persistHistory);
-  const [depth, setDepth] = useState<ResearchDepth>('standard');
+  const [depth, setDepth] = useState<ResearchDepth>(() => readDefaultDepth());
   const [chatSystem, setChatSystem] = useState(SYSTEM_PROMPT);
-  const [mode, setMode] = useState<'chat' | 'research'>('chat');
+  const [mode, setMode] = useState<'chat' | 'research'>(() => readDefaultMode());
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -198,10 +214,11 @@ export default function ResearchAgentPage() {
   };
 
   const handleNewSession = () => {
+    setTemporary(startTemporary);
     resetSession();
     pipeline.clear();
     setChatSystem(SYSTEM_PROMPT);
-    setMode('chat');
+    setMode(defaultMode);
   };
 
   // Flipping the switch starts a clean conversation in both directions:
@@ -212,8 +229,86 @@ export default function ResearchAgentPage() {
     resetSession();
     pipeline.clear();
     setChatSystem(SYSTEM_PROMPT);
-    setMode('chat');
+    setMode(defaultMode);
     setRestoring(false);
+  };
+
+  // --- Settings panel ------------------------------------------------------
+  // Every control in the sheet writes through to real workspace state; the
+  // preference rows persist to localStorage so they survive a reload.
+  const handleDefaultModeChange = (next: AgentMode) => {
+    setDefaultMode(next);
+    writeDefaultMode(next);
+  };
+
+  const handleStartTemporaryChange = (next: boolean) => {
+    setStartTemporary(next);
+    writeStartTemporary(next);
+  };
+
+  const handleDepthChange = (next: ResearchDepth) => {
+    setDepth(next);
+    writeDefaultDepth(next);
+  };
+
+  const handleSkipReviewChange = (next: boolean) => {
+    pipeline.setSkipReviewPreference(next);
+  };
+
+  const handleRestoreDefaults = () => {
+    clearPreferences();
+    setDefaultMode('chat');
+    setStartTemporary(false);
+    setDepth('standard');
+    pipeline.setSkipReviewPreference(true);
+  };
+
+  const handleExportConversation = () => {
+    const lines: string[] = ['# ZYR0 conversation', '', `_Exported ${new Date().toLocaleString()}_`];
+    for (const message of messages) {
+      if (!message.content && !message.error) continue;
+      lines.push('', `## ${message.role === 'user' ? 'You' : 'Assistant'}`, '');
+      lines.push(message.error ? `> ${message.error}` : message.content);
+    }
+    if (pipeline.report) {
+      lines.push('', '---', '', `# Research report: ${pipeline.report.topic}`, '', pipeline.report.markdown);
+    }
+    const blob = new Blob([`${lines.join('\n')}\n`], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `zyro-chat-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClearConversation = () => {
+    resetSession();
+    pipeline.clear();
+    setChatSystem(SYSTEM_PROMPT);
+    setMode(defaultMode);
+    setRestoring(false);
+    setSettingsOpen(false);
+  };
+
+  const handleDeleteAllHistory = async () => {
+    if (!user) throw new Error('Not signed in');
+    // Sessions first: their messages cascade away with them, then any
+    // free-floating rows (research_id null) are swept separately. Throwing
+    // on failure keeps the sheet on its confirm step so the user can retry.
+    const { error: deleteError } = await supabase
+      .from('agent_researches')
+      .delete()
+      .eq('user_id', user.id);
+    if (deleteError) throw deleteError;
+    await supabase.from('agent_messages').delete().eq('user_id', user.id).is('research_id', null);
+    await fetchHistory();
+    resetSession();
+    pipeline.clear();
+    setChatSystem(SYSTEM_PROMPT);
+    setMode(defaultMode);
+    setRestoring(false);
+    setSettingsOpen(false);
   };
 
   const handleSelectHistory = async (id: string, itemMode: string) => {
@@ -271,6 +366,7 @@ export default function ResearchAgentPage() {
           time: timeAgo(h.created_at),
         }))}
         historyLoading={historyLoading}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       {/* Error banner */}
@@ -306,7 +402,7 @@ export default function ResearchAgentPage() {
           onStop={abort}
           running={pipeline.running || streaming}
           depth={depth}
-          onDepthChange={setDepth}
+          onDepthChange={handleDepthChange}
           onOpenHistory={() => setSidebarOpen(true)}
         />
         </m.div>
@@ -479,7 +575,7 @@ export default function ResearchAgentPage() {
             selectedModel={selected}
             onSelectModel={(id) => setSelected(id === 'auto' ? null : id)}
             depth={depth}
-            onDepthChange={setDepth}
+            onDepthChange={handleDepthChange}
             onSend={handleSend}
             onStop={abort}
             running={pipeline.running || streaming}
@@ -488,6 +584,32 @@ export default function ResearchAgentPage() {
       )}
       </AnimatePresence>
       </div>
+
+      {/* Settings — ChatGPT-style sheet, every control wired to real state */}
+      <AnimatePresence>
+        {settingsOpen && (
+          <AgentSettingsModal
+            onClose={() => setSettingsOpen(false)}
+            defaultMode={defaultMode}
+            onDefaultModeChange={handleDefaultModeChange}
+            startTemporary={startTemporary}
+            onStartTemporaryChange={handleStartTemporaryChange}
+            depth={depth}
+            onDepthChange={handleDepthChange}
+            skipReview={pipeline.skipReview}
+            onSkipReviewChange={handleSkipReviewChange}
+            onRestoreDefaults={handleRestoreDefaults}
+            models={models}
+            modelsLoading={loading}
+            selectedModel={selected}
+            onSelectModel={setSelected}
+            canExport={messages.some((msg) => Boolean(msg.content)) || Boolean(pipeline.report)}
+            onExport={handleExportConversation}
+            onClearConversation={handleClearConversation}
+            onDeleteAllHistory={handleDeleteAllHistory}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

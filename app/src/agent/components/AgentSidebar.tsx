@@ -118,6 +118,7 @@ export function AgentSidebar({
   activeId,
   historyItems,
   historyLoading,
+  onOpenSettings,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -126,6 +127,7 @@ export function AgentSidebar({
   activeId?: string;
   historyItems?: SidebarHistoryItem[];
   historyLoading?: boolean;
+  onOpenSettings?: () => void;
 }) {
   const [search, setSearch] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -345,7 +347,10 @@ export function AgentSidebar({
 
             {/* Bottom: Settings */}
             <div className="p-3 border-t border-white/5">
-              <button className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors">
+              <button
+                onClick={onOpenSettings}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+              >
                 <Settings className="size-4" />
                 Settings
               </button>
