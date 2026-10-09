@@ -321,18 +321,17 @@ export default function ResearchAgentPage() {
           {/* Active session header */}
           <div className="shrink-0 border-b border-white/5 px-4 py-3">
             <div className="mx-auto max-w-3xl flex items-center gap-3">
-              <div className="flex flex-1 min-w-0 items-center">
-                <TemporaryToggle active={temporary} onToggle={handleToggleTemporary} />
-              </div>
+              <div className="flex-1" />
 
               {/* Chat / Research — top of the chat bar */}
               <ModeToggle mode={mode} onModeChange={setMode} />
 
               <div className="flex flex-1 min-w-0 items-center justify-end gap-2">
                 <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[#5a5a5f]'}`} />
-                <span className="text-xs text-[#5a5a5f]">
+                <span className="text-xs text-[#5a5a5f] whitespace-nowrap">
                   {pipeline.running ? 'Researching...' : streaming ? 'Generating...' : 'Ready'}
                 </span>
+                <TemporaryToggle active={temporary} onToggle={handleToggleTemporary} />
               </div>
             </div>
           </div>

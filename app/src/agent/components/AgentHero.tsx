@@ -511,22 +511,20 @@ export function AgentHero({
     <div className="relative flex flex-col items-center justify-center min-h-screen w-full overflow-hidden bg-[#0f0f0f]" data-lenis-prevent="">
       <RayBackground />
 
-      {/* Temporary chat — top left */}
-      <TemporaryToggle
-        active={temporary}
-        onToggle={onToggleTemporary}
-        className="absolute top-5 left-5 z-30"
-      />
+      {/* Top right: temporary chat + history */}
+      <div className="absolute top-5 right-5 z-30 flex items-center gap-2">
+        <TemporaryToggle active={temporary} onToggle={onToggleTemporary} />
 
-      {onOpenHistory && (
-        <button
-          onClick={onOpenHistory}
-          className="absolute top-5 right-5 z-30 flex items-center gap-1.5 px-3 py-3 rounded-full text-xs font-medium text-[#8a8a8f] hover:text-white hover:bg-white/5 transition-all duration-200 active:scale-95"
-        >
-          <History className="size-4" />
-          <span className="hidden sm:inline">History</span>
-        </button>
-      )}
+        {onOpenHistory && (
+          <button
+            onClick={onOpenHistory}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-medium text-[#8a8a8f] hover:text-white hover:bg-white/5 transition-all duration-200 active:scale-95"
+          >
+            <History className="size-4" />
+            <span className="hidden sm:inline">History</span>
+          </button>
+        )}
+      </div>
 
       {/* Chat / Research — top of the chat bar */}
       <ModeToggle
