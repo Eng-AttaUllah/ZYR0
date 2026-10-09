@@ -10,19 +10,22 @@ import {
   Eraser,
   Info,
   LogOut,
+  Moon,
   RotateCcw,
   SlidersHorizontal,
+  Sun,
   Telescope,
   Trash2,
   User,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AgentModelInfo } from '@/agent/core/types';
 import type { ResearchDepth } from '@/agent/research/types';
-import type { AgentMode } from '@/agent/lib/preferences';
+import type { AgentMode, AgentTheme } from '@/agent/lib/preferences';
 
 /**
  * ChatGPT-style settings sheet: a modal with a section rail on the left and
@@ -46,7 +49,7 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof SlidersHorizontal }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#5a5a5f]">
+    <h3 className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--ag-text-6)]">
       {children}
     </h3>
   );
@@ -64,9 +67,9 @@ function Row({
   return (
     <div className="flex flex-col gap-3 border-b border-white/5 px-3 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <div className="min-w-0">
-        <p className="text-sm text-[#e5e5e5]">{title}</p>
+        <p className="text-sm text-[var(--ag-text)]">{title}</p>
         {description && (
-          <p className="mt-0.5 text-xs leading-relaxed text-[#6a6a6f]">{description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-[var(--ag-text-5)]">{description}</p>
         )}
       </div>
       <div className="shrink-0">{children}</div>
@@ -77,8 +80,8 @@ function Row({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-white/5 px-3 py-3.5 last:border-b-0">
-      <span className="text-sm text-[#e5e5e5]">{label}</span>
-      <span className="text-right text-xs text-[#8a8a8f]">{value}</span>
+      <span className="text-sm text-[var(--ag-text)]">{label}</span>
+      <span className="text-right text-xs text-[var(--ag-text-4)]">{value}</span>
     </div>
   );
 }
@@ -91,14 +94,14 @@ function Segmented<T extends string>({
 }: {
   value: T;
   onChange: (value: T) => void;
-  options: { value: T; label: string }[];
+  options: { value: T; label: React.ReactNode }[];
   label: string;
 }) {
   return (
     <div
       role="group"
       aria-label={label}
-      className="inline-flex items-center gap-0.5 rounded-lg border border-white/10 bg-[#141417] p-0.5"
+      className="inline-flex items-center gap-0.5 rounded-lg border border-white/10 bg-[var(--ag-track)] p-0.5"
     >
       {options.map((option) => (
         <button
@@ -110,7 +113,7 @@ function Segmented<T extends string>({
             'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
             value === option.value
               ? 'bg-white/10 text-white'
-              : 'text-[#8a8a8f] hover:text-white'
+              : 'text-[var(--ag-text-4)] hover:text-white'
           )}
         >
           {option.label}
@@ -141,7 +144,7 @@ function ActionButton({
         'disabled:cursor-not-allowed disabled:opacity-40',
         variant === 'danger'
           ? 'border-red-500/30 bg-red-500/10 text-red-400 hover:border-red-500/50 hover:bg-red-500/20 hover:text-red-300'
-          : 'border-white/10 bg-white/5 text-[#c5c5c5] hover:border-white/20 hover:bg-white/10 hover:text-white'
+          : 'border-white/10 bg-white/5 text-[var(--ag-text-2)] hover:border-white/20 hover:bg-white/10 hover:text-white'
       )}
     >
       {children}
@@ -175,21 +178,21 @@ function ModelRadioRow({
       <span
         className={cn(
           'grid size-4 shrink-0 place-items-center rounded-full border transition-colors',
-          active ? 'border-[#1488fc]' : 'border-[#4a4a50]'
+          active ? 'border-[#1488fc]' : 'border-[var(--ag-line)]'
         )}
       >
         {active && <span className="size-2 rounded-full bg-[#1488fc]" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-sm text-[#e5e5e5]">{title}</span>
+          <span className="truncate text-sm text-[var(--ag-text)]">{title}</span>
           {badge && (
             <span className="shrink-0 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
               {badge}
             </span>
           )}
         </span>
-        <span className="block truncate text-xs text-[#6a6a6f]">{subtitle}</span>
+        <span className="block truncate text-xs text-[var(--ag-text-5)]">{subtitle}</span>
       </span>
       {active && <Check className="size-4 shrink-0 text-[#1488fc]" aria-hidden="true" />}
     </button>
@@ -198,6 +201,9 @@ function ModelRadioRow({
 
 export interface AgentSettingsModalProps {
   onClose: () => void;
+  // Appearance (light is the workspace default)
+  theme: AgentTheme;
+  onThemeChange: (theme: AgentTheme) => void;
   // Preferences (persisted through the page's handlers)
   defaultMode: AgentMode;
   onDefaultModeChange: (mode: AgentMode) => void;
@@ -222,6 +228,8 @@ export interface AgentSettingsModalProps {
 
 export function AgentSettingsModal({
   onClose,
+  theme,
+  onThemeChange,
   defaultMode,
   onDefaultModeChange,
   startTemporary,
@@ -286,6 +294,9 @@ export function AgentSettingsModal({
     setSigningOut(true);
     try {
       await signOut();
+      toast.success('Signed out');
+    } catch {
+      toast.error("Couldn't sign out — try again");
     } finally {
       setSigningOut(false);
     }
@@ -315,7 +326,7 @@ export function AgentSettingsModal({
         initial={{ opacity: 0, y: 10, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="relative flex h-[min(640px,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#1e1e22] shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
+        className="relative flex h-[min(640px,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--ag-surface)] shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
       >
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 px-4 sm:px-5">
@@ -324,7 +335,7 @@ export function AgentSettingsModal({
             type="button"
             onClick={onClose}
             aria-label="Close settings"
-            className="grid size-8 place-items-center rounded-full text-[#8a8a8f] transition-colors hover:bg-white/10 hover:text-white"
+            className="grid size-8 place-items-center rounded-full text-[var(--ag-text-4)] transition-colors hover:bg-white/10 hover:text-white"
           >
             <X className="size-4" />
           </button>
@@ -347,7 +358,7 @@ export function AgentSettingsModal({
                   'flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors',
                   section === item.id
                     ? 'bg-white/10 text-white'
-                    : 'text-[#8a8a8f] hover:bg-white/5 hover:text-white'
+                    : 'text-[var(--ag-text-4)] hover:bg-white/5 hover:text-white'
                 )}
               >
                 <item.icon className="size-4 shrink-0" aria-hidden="true" />
@@ -364,6 +375,36 @@ export function AgentSettingsModal({
             {section === 'general' && (
               <>
                 <SectionHeading>General</SectionHeading>
+                <Row
+                  title="Theme"
+                  description="Switch the whole workspace between light and dark."
+                >
+                  <Segmented<AgentTheme>
+                    label="Theme"
+                    value={theme}
+                    onChange={onThemeChange}
+                    options={[
+                      {
+                        value: 'light',
+                        label: (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Sun className="size-3" aria-hidden="true" />
+                            Light
+                          </span>
+                        ),
+                      },
+                      {
+                        value: 'dark',
+                        label: (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Moon className="size-3" aria-hidden="true" />
+                            Dark
+                          </span>
+                        ),
+                      },
+                    ]}
+                  />
+                </Row>
                 <Row
                   title="Default chat mode"
                   description="Which mode a new conversation opens in."
@@ -386,12 +427,12 @@ export function AgentSettingsModal({
                     checked={startTemporary}
                     onCheckedChange={onStartTemporaryChange}
                     aria-label="Start new chats in temporary mode"
-                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc] bg-[#2a2a30]"
+                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc]! bg-[var(--ag-switch)]!"
                   />
                 </Row>
                 <Row
                   title="Restore defaults"
-                  description="Reset every preference in this panel — including research and model settings."
+                  description="Reset everything on this page — theme, mode, temporary, depth, plan review and model — and apply it now."
                 >
                   <ActionButton onClick={onRestoreDefaults}>
                     <RotateCcw className="size-3.5" aria-hidden="true" />
@@ -427,7 +468,7 @@ export function AgentSettingsModal({
                     checked={skipReview}
                     onCheckedChange={onSkipReviewChange}
                     aria-label="Run plans automatically"
-                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc] bg-[#2a2a30]"
+                    className="h-5 w-9 data-[state=checked]:bg-[#1488fc]! bg-[var(--ag-switch)]!"
                   />
                 </Row>
               </>
@@ -437,7 +478,7 @@ export function AgentSettingsModal({
               <>
                 <SectionHeading>Default model</SectionHeading>
                 <div className="px-1 pt-1">
-                  <p className="px-3 pb-2 text-xs text-[#6a6a6f]">
+                  <p className="px-3 pb-2 text-xs text-[var(--ag-text-5)]">
                     The model used for new messages, and what the composer starts with.
                   </p>
                   <ModelRadioRow
@@ -447,13 +488,13 @@ export function AgentSettingsModal({
                     onClick={() => onSelectModel(null)}
                   />
                   {modelsLoading && (
-                    <p className="flex items-center gap-2 px-3 py-3 text-xs text-[#5a5a5f]">
-                      <span className="size-3 shrink-0 animate-spin rounded-full border-2 border-[#5a5a5f] border-t-transparent" />
+                    <p className="flex items-center gap-2 px-3 py-3 text-xs text-[var(--ag-text-6)]">
+                      <span className="size-3 shrink-0 animate-spin rounded-full border-2 border-[var(--ag-text-6)] border-t-transparent" />
                       Loading models…
                     </p>
                   )}
                   {!modelsLoading && enabledModels.length === 0 && (
-                    <p className="px-3 py-3 text-xs text-[#5a5a5f]">
+                    <p className="px-3 py-3 text-xs text-[var(--ag-text-6)]">
                       No models are available right now — the gateway may be offline.
                     </p>
                   )}
@@ -468,7 +509,7 @@ export function AgentSettingsModal({
                     />
                   ))}
                   {activeModel && (
-                    <p className="mt-2 px-3 text-[11px] text-[#5a5a5f]">
+                    <p className="mt-2 px-3 text-[11px] text-[var(--ag-text-6)]">
                       ${activeModel.outputPricePer1M}/M output · {activeModel.tier} tier
                     </p>
                   )}
@@ -536,12 +577,12 @@ export function AgentSettingsModal({
               <>
                 <SectionHeading>Account</SectionHeading>
                 <div className="flex items-center gap-3 border-b border-white/5 px-3 py-3.5">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#1488fc] to-[#8b5cf6] text-sm font-semibold text-white">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#1488fc] to-[#8b5cf6] text-sm font-semibold text-[#ffffff]">
                     {initials || '?'}
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-white">{name}</span>
-                    <span className="block truncate text-xs text-[#6a6a6f]">{email}</span>
+                    <span className="block truncate text-xs text-[var(--ag-text-5)]">{email}</span>
                   </span>
                 </div>
                 <InfoRow label="Signed in with" value={provider} />
@@ -551,7 +592,7 @@ export function AgentSettingsModal({
                 >
                   <ActionButton onClick={handleSignOut} disabled={signingOut}>
                     {signingOut ? (
-                      <span className="size-3 shrink-0 animate-spin rounded-full border-2 border-[#8a8a8f] border-t-transparent" />
+                      <span className="size-3 shrink-0 animate-spin rounded-full border-2 border-[var(--ag-text-4)] border-t-transparent" />
                     ) : (
                       <LogOut className="size-3.5" aria-hidden="true" />
                     )}
@@ -571,7 +612,7 @@ export function AgentSettingsModal({
                 />
                 <InfoRow label="Preferences" value="Stored in this browser" />
                 <InfoRow label="Chat history" value="Stored in your ZYR0 account" />
-                <p className="px-3 pt-3 text-[11px] leading-relaxed text-[#5a5a5f]">
+                <p className="px-3 pt-3 text-[11px] leading-relaxed text-[var(--ag-text-6)]">
                   Conversations, research reports and sources stay in your account — never in
                   temporary chats, which only live in this tab until you close it.
                 </p>

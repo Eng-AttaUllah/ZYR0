@@ -26,7 +26,7 @@ export function ModeToggle({
       role="group"
       aria-label="Response mode"
       className={cn(
-        'flex shrink-0 rounded-full border border-white/10 bg-[#1a1a1e]/70 backdrop-blur-sm overflow-hidden text-sm',
+        'flex shrink-0 rounded-full border border-white/10 bg-[var(--ag-panel-70)] backdrop-blur-sm overflow-hidden text-sm',
         className
       )}
     >
@@ -38,7 +38,7 @@ export function ModeToggle({
           'flex items-center gap-1.5 px-4 py-2 font-medium transition-all duration-150',
           mode === 'chat'
             ? 'bg-white/10 text-white'
-            : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
+            : 'text-[var(--ag-text-5)] hover:text-white hover:bg-white/5'
         )}
       >
         <MessageSquare className="size-4 shrink-0" aria-hidden="true" />
@@ -52,7 +52,7 @@ export function ModeToggle({
           'flex items-center gap-1.5 px-4 py-2 font-medium transition-all duration-150',
           mode === 'research'
             ? 'bg-white/10 text-white'
-            : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
+            : 'text-[var(--ag-text-5)] hover:text-white hover:bg-white/5'
         )}
       >
         <Telescope className="size-4 shrink-0" aria-hidden="true" />

@@ -40,9 +40,26 @@ export function writeDefaultDepth(depth: ResearchDepth): void {
   localStorage.setItem(DEFAULT_DEPTH_KEY, depth);
 }
 
+/**
+ * Workspace appearance. Light is the default: the page ships light-first
+ * and only renders the dark palette when the stored preference says so.
+ */
+export type AgentTheme = 'light' | 'dark';
+
+const THEME_KEY = 'zyro-research-theme';
+
+export function readAgentTheme(): AgentTheme {
+  return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+}
+
+export function writeAgentTheme(theme: AgentTheme): void {
+  localStorage.setItem(THEME_KEY, theme);
+}
+
 /** "Restore defaults" — forget every locally stored preference. */
 export function clearPreferences(): void {
   localStorage.removeItem(DEFAULT_MODE_KEY);
   localStorage.removeItem(START_TEMPORARY_KEY);
   localStorage.removeItem(DEFAULT_DEPTH_KEY);
+  localStorage.removeItem(THEME_KEY);
 }

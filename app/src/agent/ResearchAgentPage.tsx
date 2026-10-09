@@ -16,15 +16,19 @@ import type { ResearchDepth, ResearchReport } from '@/agent/research/types';
 import type { AgentAttachment } from '@/agent/core/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { classifyLocally } from '@/agent/classifyLocally';
+import { toast } from 'sonner';
 import {
   clearPreferences,
+  readAgentTheme,
   readDefaultDepth,
   readDefaultMode,
   readStartTemporary,
+  writeAgentTheme,
   writeDefaultDepth,
   writeDefaultMode,
   writeStartTemporary,
   type AgentMode,
+  type AgentTheme,
 } from '@/agent/lib/preferences';
 import supabase from '@/lib/supabase';
 import '@/styles/agent.css';
@@ -89,6 +93,8 @@ export default function ResearchAgentPage() {
   // Preferences restored from the Settings panel (localStorage, see
   // @/agent/lib/preferences): they decide how a *new* workspace starts.
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Light is the default appearance; Settings → General can flip it.
+  const [theme, setTheme] = useState<AgentTheme>(() => readAgentTheme());
   const [defaultMode, setDefaultMode] = useState<AgentMode>(() => readDefaultMode());
   const [startTemporary, setStartTemporary] = useState(() => readStartTemporary());
   // Temporary chat: while it is on, neither hook writes to history — no
@@ -234,16 +240,33 @@ export default function ResearchAgentPage() {
   };
 
   // --- Settings panel ------------------------------------------------------
-  // Every control in the sheet writes through to real workspace state; the
-  // preference rows persist to localStorage so they survive a reload.
+  // Every control writes through to real workspace state and takes effect on
+  // the *open* workspace, not just after a reload or the next new chat — a
+  // preference you can't see move reads as a dead switch. Preferences still
+  // persist to localStorage so they survive a reload.
+  const handleThemeChange = (next: AgentTheme) => {
+    setTheme(next);
+    writeAgentTheme(next);
+  };
+
   const handleDefaultModeChange = (next: AgentMode) => {
     setDefaultMode(next);
     writeDefaultMode(next);
+    setMode(next); // the header / hero pill flips on the spot
+    toast.success(`Default mode: ${next === 'research' ? 'Research' : 'Chat'}`);
   };
 
   const handleStartTemporaryChange = (next: boolean) => {
     setStartTemporary(next);
     writeStartTemporary(next);
+    if (isEmpty) {
+      // Nothing to protect in an empty thread — switch it right now so the
+      // temporary pill in the header updates under the user's eyes.
+      setTemporary(next);
+      toast.success(next ? 'Temporary chat on — nothing is saved' : 'Temporary chat off — chats are saved');
+    } else {
+      toast.success(next ? 'Saved — new chats will start temporary' : 'Saved — new chats will be saved to history');
+    }
   };
 
   const handleDepthChange = (next: ResearchDepth) => {
@@ -251,16 +274,35 @@ export default function ResearchAgentPage() {
     writeDefaultDepth(next);
   };
 
+  const handleSettingsDepthChange = (next: ResearchDepth) => {
+    handleDepthChange(next);
+    toast.success(`Research depth: ${next === 'quick' ? 'Quick' : next === 'deep' ? 'Deep' : 'Standard'}`);
+  };
+
   const handleSkipReviewChange = (next: boolean) => {
     pipeline.setSkipReviewPreference(next);
+    toast.success(
+      next ? 'Research plans will run automatically' : 'Research will wait for your plan approval'
+    );
+  };
+
+  const handleSelectModel = (id: string | null) => {
+    setSelected(id);
+    const model = models.find((m) => m.id === id);
+    toast.success(`Model: ${model ? model.name : 'Auto'}`);
   };
 
   const handleRestoreDefaults = () => {
-    clearPreferences();
+    clearPreferences(); // drops mode, temporary, depth and theme keys
+    setTheme('light');
     setDefaultMode('chat');
     setStartTemporary(false);
     setDepth('standard');
     pipeline.setSkipReviewPreference(true);
+    setSelected(null); // Auto
+    setMode('chat');
+    if (isEmpty) setTemporary(false);
+    toast.success('Settings restored to defaults');
   };
 
   const handleExportConversation = () => {
@@ -280,6 +322,7 @@ export default function ResearchAgentPage() {
     anchor.download = `zyro-chat-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.md`;
     anchor.click();
     URL.revokeObjectURL(url);
+    toast.success('Conversation exported as Markdown');
   };
 
   const handleClearConversation = () => {
@@ -289,6 +332,7 @@ export default function ResearchAgentPage() {
     setMode(defaultMode);
     setRestoring(false);
     setSettingsOpen(false);
+    toast.success('Conversation cleared — fresh thread started');
   };
 
   const handleDeleteAllHistory = async () => {
@@ -309,6 +353,7 @@ export default function ResearchAgentPage() {
     setMode(defaultMode);
     setRestoring(false);
     setSettingsOpen(false);
+    toast.success('All conversations deleted');
   };
 
   const handleSelectHistory = async (id: string, itemMode: string) => {
@@ -351,7 +396,7 @@ export default function ResearchAgentPage() {
   };
 
   return (
-    <div className="agent-root flex h-screen overflow-hidden relative">
+    <div className="agent-root flex h-screen overflow-hidden relative" data-ag-theme={theme}>
       {/* Sidebar */}
       <AgentSidebar
         open={sidebarOpen}
@@ -412,7 +457,7 @@ export default function ResearchAgentPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="flex min-h-0 flex-1 flex-col bg-[#0f0f0f]"
+          className="flex min-h-0 flex-1 flex-col bg-[var(--ag-bg)]"
         >
           {/* Active session header */}
           <div className="shrink-0 border-b border-white/5 px-4 py-3">
@@ -423,8 +468,8 @@ export default function ResearchAgentPage() {
               <ModeToggle mode={mode} onModeChange={setMode} />
 
               <div className="flex flex-1 min-w-0 items-center justify-end gap-2">
-                <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[#5a5a5f]'}`} />
-                <span className="text-xs text-[#5a5a5f] whitespace-nowrap">
+                <div className={`size-1.5 rounded-full ${pipeline.running || streaming ? 'bg-emerald-400 animate-pulse' : 'bg-[var(--ag-text-6)]'}`} />
+                <span className="text-xs text-[var(--ag-text-6)] whitespace-nowrap">
                   {pipeline.running ? 'Researching...' : streaming ? 'Generating...' : 'Ready'}
                 </span>
                 <TemporaryToggle active={temporary} onToggle={handleToggleTemporary} />
@@ -443,8 +488,8 @@ export default function ResearchAgentPage() {
               {/* Restoring indicator */}
               {restoring && (
                 <div className="flex justify-center py-8">
-                  <div className="flex items-center gap-2 text-[#5a5a5f] text-xs">
-                    <div className="size-3 border-2 border-[#5a5a5f] border-t-transparent rounded-full animate-spin" />
+                  <div className="flex items-center gap-2 text-[var(--ag-text-6)] text-xs">
+                    <div className="size-3 border-2 border-[var(--ag-text-6)] border-t-transparent rounded-full animate-spin" />
                     Loading session...
                   </div>
                 </div>
@@ -459,8 +504,8 @@ export default function ResearchAgentPage() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       msg.role === 'user'
-                        ? 'bg-[#1488fc] text-white'
-                        : 'bg-[#1e1e22] text-[#e5e5e5] ring-1 ring-white/[0.08]'
+                        ? 'bg-[#1488fc] text-[#ffffff]'
+                        : 'bg-[var(--ag-surface)] text-[var(--ag-text)] ring-1 ring-white/[0.08]'
                     }`}
                   >
                     {msg.streaming && !msg.content && (
@@ -494,21 +539,23 @@ export default function ResearchAgentPage() {
                     ledger={pipeline.ledger}
                     errors={pipeline.errors}
                     running={pipeline.running}
-                    className="bg-[#1e1e22] rounded-xl ring-1 ring-white/[0.08] p-3"
+                    className="bg-[var(--ag-surface)] rounded-xl ring-1 ring-white/[0.08] p-3"
                   />
                 </div>
               )}
 
               {/* Report */}
               {pipeline.report && (
-                <div className="agent-fade-up bg-[#1e1e22] rounded-xl ring-1 ring-white/[0.08] p-4">
+                <div className="agent-fade-up bg-[var(--ag-surface)] rounded-xl ring-1 ring-white/[0.08] p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs text-emerald-400 font-medium">Report Complete</span>
-                    <span className="text-xs text-[#5a5a5f]">
+                    <span className="text-xs text-[var(--ag-text-6)]">
                       {pipeline.ledger.filter(l => l.verified).length} verified sources
                     </span>
                   </div>
-                  <div className="prose prose-invert prose-sm max-w-none text-[#c5c5c5] leading-relaxed">
+                  <div
+                    className={`prose ${theme === 'dark' ? 'prose-invert ' : ''}prose-sm max-w-none text-[var(--ag-text-2)] leading-relaxed`}
+                  >
                     {renderReportMarkdown(pipeline.report.markdown, {
                       citationVerified: (key) => {
                         const entry = pipeline.ledger.find(l => l.key === key);
@@ -523,7 +570,7 @@ export default function ResearchAgentPage() {
                     })}
                   </div>
                   <div id="report-sources" className="mt-6 pt-3 border-t border-white/5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[#5a5a5f] mb-2">Sources</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ag-text-6)] mb-2">Sources</p>
                     <div className="space-y-1.5">
                       {pipeline.ledger.map((entry) => (
                         <div key={entry.key} className="flex items-start gap-2 text-xs">
@@ -534,11 +581,11 @@ export default function ResearchAgentPage() {
                             href={entry.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#a0a0a5] hover:text-white transition-colors truncate"
+                            className="text-[var(--ag-text-3)] hover:text-white transition-colors truncate"
                           >
                             {entry.title}
                           </a>
-                          <span className="text-[#5a5a5f] shrink-0">— {entry.sourceName}</span>
+                          <span className="text-[var(--ag-text-6)] shrink-0">— {entry.sourceName}</span>
                         </div>
                       ))}
                     </div>
@@ -546,19 +593,19 @@ export default function ResearchAgentPage() {
                   <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/5">
                     <button
                       onClick={() => handleFollowUp(pipeline.report!)}
-                      className="text-xs px-3 py-2 rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                      className="text-xs px-3 py-2 rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                     >
                       Follow up
                     </button>
                     <button
                       onClick={() => handleRegenerate(pipeline.report!.topic)}
-                      className="text-xs px-3 py-2 rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                      className="text-xs px-3 py-2 rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                     >
                       Regenerate
                     </button>
                     <button
                       onClick={() => generateReportPdf(pipeline.report!)}
-                      className="text-xs px-3 py-2 rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                      className="text-xs px-3 py-2 rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                     >
                       Download PDF
                     </button>
@@ -590,19 +637,21 @@ export default function ResearchAgentPage() {
         {settingsOpen && (
           <AgentSettingsModal
             onClose={() => setSettingsOpen(false)}
+            theme={theme}
+            onThemeChange={handleThemeChange}
             defaultMode={defaultMode}
             onDefaultModeChange={handleDefaultModeChange}
             startTemporary={startTemporary}
             onStartTemporaryChange={handleStartTemporaryChange}
             depth={depth}
-            onDepthChange={handleDepthChange}
+            onDepthChange={handleSettingsDepthChange}
             skipReview={pipeline.skipReview}
             onSkipReviewChange={handleSkipReviewChange}
             onRestoreDefaults={handleRestoreDefaults}
             models={models}
             modelsLoading={loading}
             selectedModel={selected}
-            onSelectModel={setSelected}
+            onSelectModel={handleSelectModel}
             canExport={messages.some((msg) => Boolean(msg.content)) || Boolean(pipeline.report)}
             onExport={handleExportConversation}
             onClearConversation={handleClearConversation}

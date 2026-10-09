@@ -23,7 +23,7 @@ function TemporaryGlyph({ active }: { active: boolean }) {
       <defs>
         <linearGradient id="tmp-chat-grad" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
           <stop stopColor={active ? '#fde68a' : '#a1a1a8'} />
-          <stop offset="1" stopColor={active ? '#f59e0b' : '#6a6a6f'} />
+          <stop offset="1" style={{ stopColor: active ? '#f59e0b' : 'var(--ag-text-5)' }} />
         </linearGradient>
       </defs>
       <g
@@ -66,7 +66,7 @@ export function TemporaryToggle({
         'flex size-9 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95',
         active
           ? 'border-amber-400/40 bg-amber-400/15 shadow-[0_0_12px_rgba(251,191,36,0.25)]'
-          : 'border-white/10 bg-[#1a1a1e]/60 hover:border-white/20 hover:bg-white/10',
+          : 'border-white/10 bg-[var(--ag-panel-60)] hover:border-white/20 hover:bg-white/10',
         className
       )}
     >

@@ -158,7 +158,7 @@ export function AgentSidebar({
           onClick={onToggle}
           aria-label="Open sidebar"
           title="Open sidebar"
-          className="fixed top-3 left-3 z-40 size-9 lg:hidden flex items-center justify-center rounded-lg border border-white/10 bg-[#111113]/80 backdrop-blur-sm text-[#8a8a8f] hover:text-white hover:bg-white/10 transition-colors"
+          className="fixed top-3 left-3 z-40 size-9 lg:hidden flex items-center justify-center rounded-lg border border-white/10 bg-[var(--ag-rail-80)] backdrop-blur-sm text-[var(--ag-text-4)] hover:text-white hover:bg-white/10 transition-colors"
         >
           <ChevronRight className="size-4" />
         </button>
@@ -166,7 +166,7 @@ export function AgentSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[#111113] border-r border-white/5 transition-all duration-300 ease-out max-w-[85vw] ${
+        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[var(--ag-rail)] border-r border-white/5 transition-all duration-300 ease-out max-w-[85vw] ${
           open
             ? 'w-[280px] translate-x-0'
             : 'w-[280px] -translate-x-full lg:translate-x-0 lg:w-[48px]'
@@ -195,7 +195,7 @@ export function AgentSidebar({
                   className={`size-10 flex items-center justify-center rounded-lg transition-colors ${
                     searchOpen
                       ? 'bg-white/10 text-white'
-                      : 'text-[#6a6a6f] hover:text-white hover:bg-white/5'
+                      : 'text-[var(--ag-text-5)] hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Search className="size-4" />
@@ -204,7 +204,7 @@ export function AgentSidebar({
                   onClick={onToggle}
                   aria-label="Close sidebar"
                   title="Close sidebar"
-                  className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                  className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -216,7 +216,7 @@ export function AgentSidebar({
                 onClick={onToggle}
                 aria-label="Open sidebar"
                 title="Open sidebar"
-                className="size-7 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                className="size-7 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -237,14 +237,14 @@ export function AgentSidebar({
           <div className="flex flex-col items-center gap-2 py-3">
             <button
               onClick={onNewSession}
-              className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+              className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
               title="New Chat"
             >
               <Plus className="size-4" />
             </button>
             <button
               onClick={onToggle}
-              className="size-10 flex items-center justify-center rounded-lg text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+              className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
               title="History"
             >
               <History className="size-4" />
@@ -259,7 +259,7 @@ export function AgentSidebar({
             {searchOpen && (
               <div id="agent-sidebar-search" className="px-3 pt-3">
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/5 focus-within:border-white/20 transition-colors">
-                  <Search className="size-3.5 text-[#5a5a5f]" />
+                  <Search className="size-3.5 text-[var(--ag-text-6)]" />
                   <input
                     autoFocus
                     value={search}
@@ -269,7 +269,7 @@ export function AgentSidebar({
                     }}
                     placeholder="Search history..."
                     aria-label="Search history"
-                    className="flex-1 bg-transparent text-sm text-white placeholder-[#5a5a5f] outline-none"
+                    className="flex-1 bg-transparent text-sm text-white placeholder-[var(--ag-text-6)] outline-none"
                   />
                 </div>
               </div>
@@ -293,7 +293,7 @@ export function AgentSidebar({
                 onClick={() => setRecentOpen((v) => !v)}
                 aria-expanded={recentOpen}
                 aria-controls="agent-recent-list"
-                className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider text-[#5a5a5f] hover:text-white hover:bg-white/5 transition-colors"
+                className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider text-[var(--ag-text-6)] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <span className="flex items-center gap-1.5">
                   <RecentIcon className="size-3.5 shrink-0 drop-shadow-[0_0_3px_rgba(77,165,252,0.45)]" />
@@ -310,11 +310,11 @@ export function AgentSidebar({
                 <div id="agent-recent-list" className="pt-1 pb-2">
                   {historyLoading ? (
                     <div className="px-4 py-8 text-center">
-                      <p className="text-xs text-[#5a5a5f]">Loading...</p>
+                      <p className="text-xs text-[var(--ag-text-6)]">Loading...</p>
                     </div>
                   ) : filtered.length === 0 ? (
                     <div className="px-4 py-8 text-center">
-                      <p className="text-xs text-[#5a5a5f]">No history yet</p>
+                      <p className="text-xs text-[var(--ag-text-6)]">No history yet</p>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-0.5">
@@ -325,7 +325,7 @@ export function AgentSidebar({
                           className={`w-full flex items-start gap-2.5 px-2.5 py-2.5 rounded-lg text-left transition-colors duration-150 ${
                             activeId === item.id
                               ? 'bg-white/10 text-white'
-                              : 'text-[#a0a0a5] hover:bg-white/5 hover:text-white'
+                              : 'text-[var(--ag-text-3)] hover:bg-white/5 hover:text-white'
                           }`}
                         >
                           {item.mode === 'research' ? (
@@ -335,7 +335,7 @@ export function AgentSidebar({
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm truncate">{item.title}</p>
-                            <p className="text-[10px] text-[#5a5a5f] mt-0.5">{item.time}</p>
+                            <p className="text-[10px] text-[var(--ag-text-6)] mt-0.5">{item.time}</p>
                           </div>
                         </button>
                       ))}
@@ -349,7 +349,7 @@ export function AgentSidebar({
             <div className="p-3 border-t border-white/5">
               <button
                 onClick={onOpenSettings}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm text-[#6a6a6f] hover:text-white hover:bg-white/5 transition-colors"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <Settings className="size-4" />
                 Settings
