@@ -234,22 +234,36 @@ export function AgentSidebar({
 
         {/* Collapsed icon-only nav */}
         {!open && (
-          <div className="flex flex-col items-center gap-2 py-3">
-            <button
-              onClick={onNewSession}
-              className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
-              title="New Chat"
-            >
-              <Plus className="size-4" />
-            </button>
-            <button
-              onClick={onToggle}
-              className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
-              title="History"
-            >
-              <History className="size-4" />
-            </button>
-          </div>
+          <>
+            <div className="flex flex-col items-center gap-2 py-3">
+              <button
+                onClick={onNewSession}
+                className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                title="New Chat"
+              >
+                <Plus className="size-4" />
+              </button>
+              <button
+                onClick={onToggle}
+                className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                title="History"
+              >
+                <History className="size-4" />
+              </button>
+            </div>
+
+            {/* Bottom: Settings — mirrors the expanded sidebar's bottom section */}
+            <div className="mt-auto flex flex-col items-center gap-2 p-2 border-t border-white/5">
+              <button
+                onClick={onOpenSettings}
+                aria-label="Settings"
+                title="Settings"
+                className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <Settings className="size-4" />
+              </button>
+            </div>
+          </>
         )}
 
         {/* Expanded content */}
