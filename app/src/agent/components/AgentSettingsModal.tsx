@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { m } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import {
   Check,
   Cpu,
@@ -255,14 +255,20 @@ export function AgentSettingsModal({
   const [deleteFailed, setDeleteFailed] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-  // Escape closes the sheet, like ChatGPT's settings dialog.
+  // Escape unwinds one layer at a time: the delete confirmation first,
+  // then the sheet itself — and never mid-delete.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      if (confirmingDelete) {
+        if (!deleting) setConfirmingDelete(false);
+        return;
+      }
+      onClose();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  }, [onClose, confirmingDelete, deleting]);
 
   const enabledModels = models.filter((model) => model.enabled);
   const activeModel = enabledModels.find((model) => model.id === selectedModel) ?? null;
@@ -542,33 +548,10 @@ export function AgentSettingsModal({
                   title="Delete all chat history"
                   description="Permanently remove every saved conversation and research report from this account."
                 >
-                  {confirmingDelete ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-xs ${deleteFailed ? 'text-red-300' : 'text-red-400'}`}>
-                        {deleteFailed ? "Couldn't delete — try again." : "This can't be undone."}
-                      </span>
-                      <ActionButton
-                        variant="danger"
-                        onClick={handleDeleteAll}
-                        disabled={deleting}
-                      >
-                        {deleting ? (
-                          <span className="size-3 shrink-0 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
-                        ) : (
-                          <Trash2 className="size-3.5" aria-hidden="true" />
-                        )}
-                        {deleting ? 'Deleting…' : 'Delete everything'}
-                      </ActionButton>
-                      <ActionButton onClick={() => setConfirmingDelete(false)} disabled={deleting}>
-                        Cancel
-                      </ActionButton>
-                    </div>
-                  ) : (
-                    <ActionButton variant="danger" onClick={() => setConfirmingDelete(true)}>
-                      <Trash2 className="size-3.5" aria-hidden="true" />
-                      Delete all
-                    </ActionButton>
-                  )}
+                  <ActionButton variant="danger" onClick={() => setConfirmingDelete(true)}>
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                    Delete all
+                  </ActionButton>
                 </Row>
               </>
             )}
@@ -621,6 +604,81 @@ export function AgentSettingsModal({
           </div>
         </div>
       </m.div>
+
+      {/* Delete-all confirmation popup — layered above the sheet */}
+      <AnimatePresence>
+        {confirmingDelete && (
+          <m.div
+            key="delete-confirm"
+            className="absolute inset-0 z-20 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-history-title"
+            aria-describedby="delete-history-body"
+          >
+            <button
+              type="button"
+              aria-label="Close confirmation"
+              onClick={() => {
+                if (!deleting) setConfirmingDelete(false);
+              }}
+              className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-[2px]"
+            />
+            <m.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-[var(--ag-surface)] p-5 shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
+            >
+              <span className="mb-3 grid size-10 place-items-center rounded-full bg-red-500/10 text-red-400">
+                <Trash2 className="size-5" aria-hidden="true" />
+              </span>
+              <h2 id="delete-history-title" className="text-base font-semibold text-white">
+                Delete all chat history?
+              </h2>
+              <p
+                id="delete-history-body"
+                className="mt-1.5 text-sm leading-relaxed text-[var(--ag-text-4)]"
+              >
+                Every saved conversation and research report will be permanently removed from
+                this account. This can't be undone.
+              </p>
+              {deleteFailed && (
+                <p className="mt-2 text-sm text-red-300">Couldn't delete — try again.</p>
+              )}
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={() => setConfirmingDelete(false)}
+                  disabled={deleting}
+                  className="rounded-lg px-3.5 py-2 text-sm text-[var(--ag-text-4)] transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAll}
+                  disabled={deleting}
+                  className="flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-[#ffffff] transition-colors hover:bg-red-500 disabled:opacity-60"
+                >
+                  {deleting ? (
+                    <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
+                  ) : (
+                    <Trash2 className="size-3.5" aria-hidden="true" />
+                  )}
+                  {deleting ? 'Deleting…' : 'Delete everything'}
+                </button>
+              </div>
+            </m.div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </m.div>
   );
 }
