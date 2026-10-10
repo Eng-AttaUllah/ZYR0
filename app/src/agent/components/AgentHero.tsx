@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Zap, SendHorizontal, History } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ModeToggle, type AgentMode } from '@/agent/components/ModeToggle'
 import { TemporaryToggle } from '@/agent/components/TemporaryToggle'
@@ -113,7 +114,7 @@ function ChatInput({
   const audioContextRef = useRef<AudioContext | null>(null)
   const rafRef = useRef<number | null>(null)
   const recognitionRef = useRef<any>(null)
-  const demoTextIntervalRef = useRef<number | null>(null)
+  const shouldRestartRef = useRef(false)
 
   const [hoverStyle, setHoverStyle] = useState({ opacity: 0, transform: 'translateY(0px) scale(0.95)', transition: 'none' })
   const [containerHeight, setContainerHeight] = useState(116)
@@ -161,11 +162,11 @@ function ChatInput({
   const expand = () => { setIsSmoothResize(false); setExpanded(true) }
 
   const stopRecording = useCallback(() => {
+    shouldRestartRef.current = false
     if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null }
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null }
     if (audioContextRef.current) { audioContextRef.current.close(); audioContextRef.current = null }
-    if (demoTextIntervalRef.current) { window.clearInterval(demoTextIntervalRef.current); demoTextIntervalRef.current = null }
     setIsRecording(false)
     setAudioData(new Array(5).fill(0))
   }, [])
@@ -173,64 +174,73 @@ function ChatInput({
   const startRecording = useCallback(async () => {
     setIsSmoothResize(false)
     setExpanded(true)
+    // Real dictation only — never fabricate text on the user's behalf.
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) { toast.error("Voice input isn't supported in this browser"); return }
     let stream: MediaStream | null = null
     try {
       if (navigator.mediaDevices?.getUserMedia) stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch { /* mic denied */ }
+    } catch { /* handled below */ }
+    if (!stream) { toast.error('Microphone access denied — check browser permissions'); return }
     setIsRecording(true)
-    function simulateText() {
-      const fakeText = 'What are the latest advances in quantum computing?'
-      const words = fakeText.split(' ')
-      let i = 0
-      let currentBase = valueRef.current
-      demoTextIntervalRef.current = window.setInterval(() => {
-        if (i < words.length) { currentBase = (currentBase ? currentBase + ' ' : '') + words[i]; handleValueChange(currentBase); i++ }
-        else stopRecording()
-      }, 300)
+    streamRef.current = stream
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+    const audioCtx = new AudioCtx()
+    audioContextRef.current = audioCtx
+    const analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 64
+    const source = audioCtx.createMediaStreamSource(stream)
+    source.connect(analyser)
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    const updateVisualizer = () => {
+      analyser.getByteFrequencyData(dataArray)
+      const bands = new Array(5).fill(0)
+      const step = Math.floor(dataArray.length / 5)
+      for (let i = 0; i < 5; i++) { let sum = 0; for (let j = 0; j < step; j++) sum += dataArray[i * step + j]; bands[i] = sum / step / 255 }
+      setAudioData(bands)
+      rafRef.current = requestAnimationFrame(updateVisualizer)
     }
-    if (stream) {
-      streamRef.current = stream
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      const audioCtx = new AudioCtx()
-      audioContextRef.current = audioCtx
-      const analyser = audioCtx.createAnalyser()
-      analyser.fftSize = 64
-      const source = audioCtx.createMediaStreamSource(stream)
-      source.connect(analyser)
-      const dataArray = new Uint8Array(analyser.frequencyBinCount)
-      const updateVisualizer = () => {
-        analyser.getByteFrequencyData(dataArray)
-        const bands = new Array(5).fill(0)
-        const step = Math.floor(dataArray.length / 5)
-        for (let i = 0; i < 5; i++) { let sum = 0; for (let j = 0; j < step; j++) sum += dataArray[i * step + j]; bands[i] = sum / step / 255 }
-        setAudioData(bands)
-        rafRef.current = requestAnimationFrame(updateVisualizer)
+    updateVisualizer()
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    // Recognize in the browser's own language — the locale mismatch was a
+    // major source of garbled transcripts.
+    recognition.lang = navigator.language || 'en-US'
+    let baseline = valueRef.current
+    recognition.onresult = (event: any) => {
+      let interim = '', final = ''
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) final += event.results[i][0].transcript
+        else interim += event.results[i][0].transcript
       }
-      updateVisualizer()
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition()
-        recognition.continuous = true
-        recognition.interimResults = true
-        let baseline = valueRef.current
-        recognition.onresult = (event: any) => {
-          let interim = '', final = ''
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) final += event.results[i][0].transcript
-            else interim += event.results[i][0].transcript
-          }
-          if (final) baseline += (baseline ? ' ' : '') + final
-          handleValueChange((baseline + (interim ? ' ' + interim : '')).trim())
-        }
-        recognition.onerror = () => stopRecording()
-        recognition.onend = () => stopRecording()
-        recognitionRef.current = recognition
-        recognition.start()
-      } else { simulateText() }
-    } else {
-      demoTextIntervalRef.current = window.setInterval(() => { setAudioData(Array.from({ length: 5 }, () => Math.random() * 0.8 + 0.1)) }, 100)
-      simulateText()
+      if (final) baseline += (baseline ? ' ' : '') + final
+      handleValueChange((baseline + (interim ? ' ' + interim : '')).trim())
     }
+    recognition.onerror = (event: any) => {
+      const code = String(event?.error ?? '')
+      // 'no-speech' / 'aborted' are transient — onend decides whether to resume.
+      if (code === 'no-speech' || code === 'aborted') return
+      shouldRestartRef.current = false
+      toast.error(
+        code === 'not-allowed' || code === 'service-not-allowed'
+          ? 'Microphone access denied — check browser permissions'
+          : 'Voice input stopped — speech service unavailable',
+      )
+      stopRecording()
+    }
+    // Chrome silently ends recognition after a short pause; restart it while
+    // the user is still recording so the rest of the sentence isn't dropped.
+    recognition.onend = () => {
+      if (shouldRestartRef.current && recognitionRef.current === recognition) {
+        try { recognition.start() } catch { stopRecording() }
+        return
+      }
+      stopRecording()
+    }
+    shouldRestartRef.current = true
+    recognitionRef.current = recognition
+    recognition.start()
   }, [handleValueChange, stopRecording])
 
   useEffect(() => { if (isRecording && textareaRef.current) textareaRef.current.scrollTop = textareaRef.current.scrollHeight }, [value, isRecording])
