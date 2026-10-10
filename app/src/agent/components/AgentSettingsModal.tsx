@@ -635,18 +635,20 @@ export function AgentSettingsModal({
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
               className="relative w-full max-w-sm rounded-2xl border border-white/10 bg-[var(--ag-surface)] p-5 shadow-[0_24px_64px_rgba(0,0,0,0.55)]"
             >
-              <span className="mb-3 grid size-10 place-items-center rounded-full bg-red-500/10 text-red-400">
-                <Trash2 className="size-5" aria-hidden="true" />
-              </span>
-              <h2 id="delete-history-title" className="text-base font-semibold text-white">
-                Delete all chat history?
-              </h2>
+              <div className="flex items-center gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-red-500/10 text-red-400">
+                  <Trash2 className="size-5" aria-hidden="true" />
+                </span>
+                <h2 id="delete-history-title" className="text-base font-semibold text-white">
+                  Delete all chat history.
+                </h2>
+              </div>
               <p
                 id="delete-history-body"
-                className="mt-1.5 text-sm leading-relaxed text-[var(--ag-text-4)]"
+                className="mt-3 text-sm leading-relaxed text-[var(--ag-text-4)]"
               >
-                Every saved conversation and research report will be permanently removed from
-                this account. This can't be undone.
+                Are you sure you want to delete your history?{' '}
+                <span className="font-medium text-red-400">This can't be undone.</span>
               </p>
               {deleteFailed && (
                 <p className="mt-2 text-sm text-red-300">Couldn't delete — try again.</p>
