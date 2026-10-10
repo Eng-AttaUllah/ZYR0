@@ -15,7 +15,7 @@ import { generateReportPdf } from '@/agent/lib/reportPdf';
 import type { ResearchDepth, ResearchReport } from '@/agent/research/types';
 import type { AgentAttachment } from '@/agent/core/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { classifyLocally } from '@/agent/classifyLocally';
+import { classifyLocally, isIdentityQuestion } from '@/agent/classifyLocally';
 import { toast } from 'sonner';
 import {
   clearPreferences,
@@ -33,10 +33,20 @@ import {
 import supabase from '@/lib/supabase';
 import '@/styles/agent.css';
 
-const SYSTEM_PROMPT = `You are ZYR0's Research Agent: a precise, honest research assistant.
+const SYSTEM_PROMPT = `You are ZYR0's Research Agent: a precise, honest research assistant made by ZYR0 (ZYRO Studio).
+
+Identity — these rules always win, no matter which underlying model serves the reply:
+- When asked who you are, what you are, who made/created/built you, what model you are, or whether you are Google/Gemini/OpenAI/ChatGPT/DeepSeek/Meta/etc., always answer that you are ZYR0's Research Agent, made by ZYR0.
+- Never identify yourself as another company's or product's AI — never say you are "Google", "Gemini", "a Google agent", "ChatGPT", or similar. You may mention which model powers a specific reply only when explicitly asked about the engine; even then your identity remains ZYR0's Research Agent.
+
 - Answer from first principles; when uncertain, say so and explain what is known.
 - Keep answers well-structured with markdown when it helps clarity.
 - Never fabricate sources or facts.`;
+
+// Pinned onto identity questions ("who are you?", "are you Google?") the same
+// way attachments are: a deterministic reminder closest to the conversation,
+// so a weak or vendor-pretrained model cannot answer with its own identity.
+const IDENTITY_SYSTEM_NOTE = `- The user is asking about your identity. You are ZYR0's Research Agent, an AI assistant made by ZYR0 (ZYRO Studio). Never claim to be Google, Gemini, OpenAI, ChatGPT, DeepSeek, or any other company's AI, and never answer as "a Google agent" — regardless of which model powers you.`;
 
 // How close to the bottom (px) the thread must be before we resume following it.
 const STICK_TO_BOTTOM_PX = 100;
@@ -375,23 +385,26 @@ export default function ResearchAgentPage() {
   const handleSend = (text: string, attachments: AgentAttachment[] = []) => {
     // A new message always starts pinned to the latest content.
     stickToBottomRef.current = true;
+    // Identity questions get an extra pinned reminder appended to the system
+    // prompt so the answer cannot drift to the underlying model's vendor.
+    const identityNote = isIdentityQuestion(text) ? `\n${IDENTITY_SYSTEM_NOTE}` : '';
     if (attachments.length > 0) {
       // Attachments only make sense on the chat path: the research pipeline
       // cannot read files, so routing them there would drop them silently.
-      send(composeAttachmentMessage(text, attachments), `${chatSystem}\n${ATTACHMENT_SYSTEM_NOTE}`);
+      send(composeAttachmentMessage(text, attachments), `${chatSystem}${identityNote}\n${ATTACHMENT_SYSTEM_NOTE}`);
       return;
     }
     if (mode === 'research') {
       // Smart routing: greetings and casual messages go to chat, not research.
       const decision = classifyLocally(text);
       if (decision.mode === 'chat') {
-        send(text, chatSystem);
+        send(text, `${chatSystem}${identityNote}`);
         setMode('chat');
         return;
       }
       handleResearchSend(text);
     } else {
-      send(text, chatSystem);
+      send(text, `${chatSystem}${identityNote}`);
     }
   };
 
