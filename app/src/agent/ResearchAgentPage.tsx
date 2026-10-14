@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { AgentHero } from '@/agent/components/AgentHero';
 import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
@@ -40,7 +42,9 @@ Identity — these rules always win, no matter which underlying model serves the
 - Never identify yourself as another company's or product's AI — never say you are "Google", "Gemini", "a Google agent", "ChatGPT", or similar. You may mention which model powers a specific reply only when explicitly asked about the engine; even then your identity remains ZYR0's Research Agent.
 
 - Answer from first principles; when uncertain, say so and explain what is known.
-- Keep answers well-structured with markdown when it helps clarity.
+- Answer directly and conversationally: lead with the answer itself, never with a preamble.
+- Keep formatting light — short paragraphs, bullets when listing. Use a heading only for genuinely long answers, and never dump encyclopedic sectioned articles (no "### 1." / "### 2." templates) unless the user explicitly asks for a structured report.
+- Write like ZYR0's Research Agent: natural, direct phrasing — no generic filler, no "as an AI" or textbook boilerplate, and nothing that reads like it was copied from an open-source article.
 - Never fabricate sources or facts.`;
 
 // Pinned onto identity questions ("who are you?", "are you Google?") the same
@@ -530,11 +534,19 @@ export default function ResearchAgentPage() {
                     )}
                     {msg.error ? (
                       <span className="text-red-400">{msg.error}</span>
+                    ) : msg.role === 'assistant' ? (
+                      // Assistant replies are markdown — render them (during
+                      // streaming too) instead of printing raw ### / ** syntax.
+                      // The trailing block char doubles as the typing cursor.
+                      <div
+                        className={`prose ${theme === 'dark' ? 'prose-invert ' : ''}prose-sm max-w-none leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.streaming && msg.content ? `${msg.content} ▌` : msg.content}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       <span className="agent-whitespace-pre-wrap">{msg.content}</span>
-                    )}
-                    {msg.streaming && msg.content && (
-                      <span className="inline-block w-0.5 h-4 bg-white/70 ml-0.5 animate-pulse" />
                     )}
                   </div>
                 </div>
