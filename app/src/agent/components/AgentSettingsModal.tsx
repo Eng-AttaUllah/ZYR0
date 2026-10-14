@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, m } from 'framer-motion';
 import {
   Check,
+  Copy,
   Cpu,
   Database,
   Download,
   Eraser,
+  ExternalLink,
   Info,
   LogOut,
   Moon,
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import appPkg from '../../../package.json';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AgentModelInfo } from '@/agent/core/types';
@@ -45,6 +48,15 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof SlidersHorizontal }
   { id: 'data', label: 'Data controls', icon: Database },
   { id: 'account', label: 'Account', icon: User },
   { id: 'about', label: 'About', icon: Info },
+];
+
+const REPO_URL = 'https://github.com/ilyaskhan12Q/ZYR0';
+
+// Seeded from the current release — refresh on every version bump.
+const WHATS_NEW: string[] = [
+  'Always identifies as ZYR0’s Research Agent',
+  'Voice input transcribes real speech instead of fabricating it',
+  'Redesigned settings sheet and delete-history confirmation',
 ];
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -305,6 +317,21 @@ export function AgentSettingsModal({
       toast.error("Couldn't sign out — try again");
     } finally {
       setSigningOut(false);
+    }
+  };
+
+  const handleCopyDebug = async () => {
+    const details = [
+      `ZYR0 Research Agent v${appPkg.version}`,
+      `Environment: ${import.meta.env.MODE}`,
+      `Model: ${activeModel?.name ?? 'Auto'}`,
+      `User agent: ${navigator.userAgent}`,
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(details);
+      toast.success('Debug info copied');
+    } catch {
+      toast.error("Couldn't copy — try again");
     }
   };
 
@@ -588,13 +615,75 @@ export function AgentSettingsModal({
             {section === 'about' && (
               <>
                 <SectionHeading>About</SectionHeading>
-                <InfoRow label="Workspace" value="ZYR0 Research Agent" />
-                <InfoRow
-                  label="Environment"
-                  value={import.meta.env.MODE === 'production' ? 'Production' : 'Development'}
-                />
+                {/* Brand hero */}
+                <div className="flex items-center gap-3.5 border-b border-white/5 px-3 py-4">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1488fc] to-[#8b5cf6] text-white shadow-[0_8px_24px_rgba(20,136,252,0.35)]">
+                    <Telescope className="size-6" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-white">
+                      ZYR0&apos;s Research Agent
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-[var(--ag-text-5)]">
+                      Autonomous research, grounded in real sources.
+                    </span>
+                    <span className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-[var(--ag-text-4)]">
+                        v{appPkg.version}
+                      </span>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-[var(--ag-text-4)]">
+                        {import.meta.env.MODE === 'production' ? 'Production' : 'Development'}
+                      </span>
+                    </span>
+                  </span>
+                </div>
                 <InfoRow label="Preferences" value="Stored in this browser" />
                 <InfoRow label="Chat history" value="Stored in your ZYR0 account" />
+
+                <SectionHeading>What&apos;s new in v{appPkg.version}</SectionHeading>
+                <ul className="px-3 pb-1">
+                  {WHATS_NEW.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2 py-1 text-xs leading-relaxed text-[var(--ag-text-4)]"
+                    >
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-400" aria-hidden="true" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <SectionHeading>Links</SectionHeading>
+                <Row
+                  title="Source code"
+                  description="The full ZYR0 codebase on GitHub."
+                >
+                  <ActionButton onClick={() => window.open(REPO_URL, '_blank', 'noopener,noreferrer')}>
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                    GitHub
+                  </ActionButton>
+                </Row>
+                <Row
+                  title="Report an issue"
+                  description="Open a ticket in the same repository."
+                >
+                  <ActionButton onClick={() => window.open(REPO_URL, '_blank', 'noopener,noreferrer')}>
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                    GitHub
+                  </ActionButton>
+                </Row>
+
+                <SectionHeading>Diagnostics</SectionHeading>
+                <Row
+                  title="Debug info"
+                  description="Copy version, environment, model and browser details for support."
+                >
+                  <ActionButton onClick={handleCopyDebug}>
+                    <Copy className="size-3.5" aria-hidden="true" />
+                    Copy details
+                  </ActionButton>
+                </Row>
+
                 <p className="px-3 pt-3 text-[11px] leading-relaxed text-[var(--ag-text-6)]">
                   Conversations, research reports and sources stay in your account — never in
                   temporary chats, which only live in this tab until you close it.
