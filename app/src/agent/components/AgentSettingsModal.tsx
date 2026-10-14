@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, m } from 'framer-motion';
 import {
   Check,
@@ -13,6 +14,7 @@ import {
   Info,
   LogOut,
   Moon,
+  Pencil,
   RotateCcw,
   SlidersHorizontal,
   Sun,
@@ -261,6 +263,7 @@ export function AgentSettingsModal({
   onDeleteAllHistory,
 }: AgentSettingsModalProps) {
   const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   const [section, setSection] = useState<SectionId>('general');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -293,6 +296,21 @@ export function AgentSettingsModal({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+
+  // ChatGPT-style account facts: sign-in method, role and a profile link.
+  const providerLabel =
+    provider === 'email'
+      ? 'Email & password'
+      : provider.charAt(0).toUpperCase() + provider.slice(1);
+  const roleLabel = profile?.role
+    ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
+    : null;
+  const profilePath =
+    profile?.role === 'admin'
+      ? '/admin/dashboard'
+      : profile
+        ? `/${profile.role}/profile`
+        : null;
 
   const handleDeleteAll = async () => {
     setDeleting(true);
@@ -586,16 +604,37 @@ export function AgentSettingsModal({
             {section === 'account' && (
               <>
                 <SectionHeading>Account</SectionHeading>
-                <div className="flex items-center gap-3 border-b border-white/5 px-3 py-3.5">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#1488fc] to-[#8b5cf6] text-sm font-semibold text-[#ffffff]">
-                    {initials || '?'}
-                  </span>
+                {/* Identity hero */}
+                <div className="flex items-center gap-3 border-b border-white/5 px-3 py-4">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="size-12 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+                    />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#1488fc] to-[#8b5cf6] text-base font-semibold text-[#ffffff]">
+                      {initials || '?'}
+                    </span>
+                  )}
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-white">{name}</span>
-                    <span className="block truncate text-xs text-[var(--ag-text-5)]">{email}</span>
+                    <span className="block truncate text-sm font-semibold text-white">{name}</span>
+                    <span className="mt-0.5 block truncate text-xs text-[var(--ag-text-5)]">{email}</span>
                   </span>
                 </div>
-                <InfoRow label="Signed in with" value={provider} />
+                <InfoRow label="Sign-in method" value={providerLabel} />
+                {roleLabel && <InfoRow label="Role" value={roleLabel} />}
+                {profilePath && (
+                  <Row
+                    title="Edit profile"
+                    description="Update your name, photo and personal details."
+                  >
+                    <ActionButton onClick={() => navigate(profilePath)}>
+                      <Pencil className="size-3.5" aria-hidden="true" />
+                      Edit profile
+                    </ActionButton>
+                  </Row>
+                )}
                 <Row
                   title="Sign out"
                   description="End this session on the current device."
