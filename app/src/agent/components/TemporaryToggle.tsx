@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
  * (quiet gray when off, amber when on) so the control still reads as a
  * premium mark at the 16px it renders at.
  */
-function TemporaryGlyph({ active }: { active: boolean }) {
+export function TemporaryGlyph({ active }: { active: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"

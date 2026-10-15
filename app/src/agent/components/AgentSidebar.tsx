@@ -119,6 +119,8 @@ export function AgentSidebar({
   historyItems,
   historyLoading,
   onOpenSettings,
+  searchOpen,
+  onSearchOpenChange,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -128,13 +130,16 @@ export function AgentSidebar({
   historyItems?: SidebarHistoryItem[];
   historyLoading?: boolean;
   onOpenSettings?: () => void;
+  // Search visibility is controlled by the page so the floating quick-actions
+  // button can open the sidebar and reveal the search box in one go.
+  searchOpen: boolean;
+  onSearchOpenChange: (open: boolean) => void;
 }) {
   const [search, setSearch] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(true);
 
   const closeSearch = () => {
-    setSearchOpen(false);
+    onSearchOpenChange(false);
     setSearch('');
   };
 
@@ -187,7 +192,7 @@ export function AgentSidebar({
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setSearchOpen((v) => !v)}
+                  onClick={() => onSearchOpenChange(!searchOpen)}
                   aria-label="Search chats"
                   aria-expanded={searchOpen}
                   aria-controls="agent-sidebar-search"
@@ -275,6 +280,7 @@ export function AgentSidebar({
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-white/5 border border-white/5 focus-within:border-white/20 transition-colors">
                   <Search className="size-3.5 text-[var(--ag-text-6)]" />
                   <input
+                    id="agent-sidebar-search-input"
                     autoFocus
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}

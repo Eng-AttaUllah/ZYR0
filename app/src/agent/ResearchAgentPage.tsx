@@ -6,6 +6,7 @@ import { AgentHero } from '@/agent/components/AgentHero';
 import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
 import { AgentSidebar, type SidebarHistoryItem } from '@/agent/components/AgentSidebar';
+import { AgentQuickActions } from '@/agent/components/AgentQuickActions';
 import { AgentSettingsModal } from '@/agent/components/AgentSettingsModal';
 import { ModeToggle } from '@/agent/components/ModeToggle';
 import { TemporaryToggle } from '@/agent/components/TemporaryToggle';
@@ -121,6 +122,8 @@ export default function ResearchAgentPage() {
   const [chatSystem, setChatSystem] = useState(SYSTEM_PROMPT);
   const [mode, setMode] = useState<'chat' | 'research'>(() => readDefaultMode());
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
+  // Controlled so the floating quick-actions button can reveal the search box.
+  const [sidebarSearchOpen, setSidebarSearchOpen] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -252,6 +255,17 @@ export default function ResearchAgentPage() {
     setMode(defaultMode);
     setRestoring(false);
   };
+
+  // Quick-actions "Search": unfold the sidebar if it is collapsed, reveal the
+  // search box and put the caret in it (autoFocus covers the mount case; the
+  // timeout refocuses when the field was already on screen).
+  const handleOpenSearch = useCallback(() => {
+    setSidebarOpen(true);
+    setSidebarSearchOpen(true);
+    window.setTimeout(() => {
+      document.getElementById('agent-sidebar-search-input')?.focus();
+    }, 0);
+  }, []);
 
   // --- Settings panel ------------------------------------------------------
   // Every control writes through to real workspace state and takes effect on
@@ -429,6 +443,18 @@ export default function ResearchAgentPage() {
         }))}
         historyLoading={historyLoading}
         onOpenSettings={() => setSettingsOpen(true)}
+        searchOpen={sidebarSearchOpen}
+        onSearchOpenChange={setSidebarSearchOpen}
+      />
+
+      {/* Floating quick actions — hover (or tap) reveals the shortcuts */}
+      <AgentQuickActions
+        sidebarOpen={sidebarOpen}
+        onCloseSidebar={() => setSidebarOpen(false)}
+        onOpenSearch={handleOpenSearch}
+        temporary={temporary}
+        onToggleTemporary={handleToggleTemporary}
+        onNewChat={handleNewSession}
       />
 
       {/* Error banner */}
