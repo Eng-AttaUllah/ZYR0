@@ -5,14 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, m } from 'framer-motion';
 import {
   Check,
-  Copy,
   Cpu,
   Database,
   Download,
   Eraser,
-  ExternalLink,
   Info,
   LogOut,
+  MessageCircle,
   Moon,
   Pencil,
   RotateCcw,
@@ -52,13 +51,14 @@ const SECTIONS: { id: SectionId; label: string; icon: typeof SlidersHorizontal }
   { id: 'about', label: 'About', icon: Info },
 ];
 
-const REPO_URL = 'https://github.com/ilyaskhan12Q/ZYR0';
+// Report-an-issue destination: the community chat the ZYRO team watches.
+const WHATSAPP_URL = 'https://chat.whatsapp.com/H8NzGKmWBkmDRkUg4p67Gj?s=cl&p=a&mlu=4&ilr=4';
 
 // Seeded from the current release — refresh on every version bump.
 const WHATS_NEW: string[] = [
-  'Always identifies as ZYR0’s Research Agent',
-  'Voice input transcribes real speech instead of fabricating it',
-  'Redesigned settings sheet and delete-history confirmation',
+  'Keyboard shortcuts: Alt+N new chat, Alt+T temporary, Alt+S search, Alt+L sidebar',
+  'Chat replies render as formatted markdown while they stream',
+  'Richer About pane, plus a WhatsApp link to reach the team',
 ];
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -335,21 +335,6 @@ export function AgentSettingsModal({
       toast.error("Couldn't sign out — try again");
     } finally {
       setSigningOut(false);
-    }
-  };
-
-  const handleCopyDebug = async () => {
-    const details = [
-      `ZYR0 Research Agent v${appPkg.version}`,
-      `Environment: ${import.meta.env.MODE}`,
-      `Model: ${activeModel?.name ?? 'Auto'}`,
-      `User agent: ${navigator.userAgent}`,
-    ].join('\n');
-    try {
-      await navigator.clipboard.writeText(details);
-      toast.success('Debug info copied');
-    } catch {
-      toast.error("Couldn't copy — try again");
     }
   };
 
@@ -694,32 +679,12 @@ export function AgentSettingsModal({
 
                 <SectionHeading>Links</SectionHeading>
                 <Row
-                  title="Source code"
-                  description="The full ZYR0 codebase on GitHub."
-                >
-                  <ActionButton onClick={() => window.open(REPO_URL, '_blank', 'noopener,noreferrer')}>
-                    <ExternalLink className="size-3.5" aria-hidden="true" />
-                    GitHub
-                  </ActionButton>
-                </Row>
-                <Row
                   title="Report an issue"
-                  description="Open a ticket in the same repository."
+                  description="Join the ZYR0 community chat on WhatsApp and tell us what went wrong."
                 >
-                  <ActionButton onClick={() => window.open(REPO_URL, '_blank', 'noopener,noreferrer')}>
-                    <ExternalLink className="size-3.5" aria-hidden="true" />
-                    GitHub
-                  </ActionButton>
-                </Row>
-
-                <SectionHeading>Diagnostics</SectionHeading>
-                <Row
-                  title="Debug info"
-                  description="Copy version, environment, model and browser details for support."
-                >
-                  <ActionButton onClick={handleCopyDebug}>
-                    <Copy className="size-3.5" aria-hidden="true" />
-                    Copy details
+                  <ActionButton onClick={() => window.open(WHATSAPP_URL, '_blank', 'noopener,noreferrer')}>
+                    <MessageCircle className="size-3.5" aria-hidden="true" />
+                    WhatsApp
                   </ActionButton>
                 </Row>
 
