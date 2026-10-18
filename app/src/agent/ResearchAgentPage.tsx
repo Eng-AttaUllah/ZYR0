@@ -6,11 +6,11 @@ import { AgentHero } from '@/agent/components/AgentHero';
 import { ResearchReasoning } from '@/agent/components/ResearchReasoning';
 import { ThreadInput } from '@/agent/components/ThreadInput';
 import { AgentSidebar, type SidebarHistoryItem } from '@/agent/components/AgentSidebar';
-import { AgentQuickActions } from '@/agent/components/AgentQuickActions';
 import { AgentSettingsModal } from '@/agent/components/AgentSettingsModal';
 import { ModeToggle } from '@/agent/components/ModeToggle';
 import { TemporaryToggle } from '@/agent/components/TemporaryToggle';
 import { useAgentChat } from '@/agent/hooks/useAgentChat';
+import { useAgentShortcuts } from '@/agent/hooks/useAgentShortcuts';
 import { useAgentModels } from '@/agent/hooks/useAgentModels';
 import { useResearchPipeline } from '@/agent/hooks/useResearchPipeline';
 import { renderReportMarkdown } from '@/agent/render/renderReportMarkdown';
@@ -267,6 +267,15 @@ export default function ResearchAgentPage() {
     }, 0);
   }, []);
 
+  // Keyboard shortcuts: Alt+N new chat · Alt+T temporary chat · Alt+S search ·
+  // Alt+L close sidebar (Alt rather than Ctrl — browsers reserve Ctrl+N/T/L).
+  useAgentShortcuts({
+    onNewChat: handleNewSession,
+    onToggleTemporary: handleToggleTemporary,
+    onOpenSearch: handleOpenSearch,
+    onCloseSidebar: () => setSidebarOpen(false),
+  });
+
   // --- Settings panel ------------------------------------------------------
   // Every control writes through to real workspace state and takes effect on
   // the *open* workspace, not just after a reload or the next new chat — a
@@ -445,16 +454,6 @@ export default function ResearchAgentPage() {
         onOpenSettings={() => setSettingsOpen(true)}
         searchOpen={sidebarSearchOpen}
         onSearchOpenChange={setSidebarSearchOpen}
-      />
-
-      {/* Floating quick actions — hover (or tap) reveals the shortcuts */}
-      <AgentQuickActions
-        sidebarOpen={sidebarOpen}
-        onCloseSidebar={() => setSidebarOpen(false)}
-        onOpenSearch={handleOpenSearch}
-        temporary={temporary}
-        onToggleTemporary={handleToggleTemporary}
-        onNewChat={handleNewSession}
       />
 
       {/* Error banner */}

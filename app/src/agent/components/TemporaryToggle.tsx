@@ -1,6 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { AGENT_SHORTCUTS } from '@/agent/hooks/useAgentShortcuts'
+import { ShortcutHint } from '@/agent/components/ShortcutHint'
 
 /**
  * The temporary-chat glyph: a speech bubble with a diagonal slash — an
@@ -8,7 +10,7 @@ import { cn } from '@/lib/utils'
  * (quiet gray when off, amber when on) so the control still reads as a
  * premium mark at the 16px it renders at.
  */
-export function TemporaryGlyph({ active }: { active: boolean }) {
+function TemporaryGlyph({ active }: { active: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -56,21 +58,26 @@ export function TemporaryToggle({
   className?: string
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={active}
-      aria-label="Temporary chat"
-      title="Temporary chat — messages are never saved to your history"
-      className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95',
-        active
-          ? 'border-amber-400/40 bg-amber-400/15 shadow-[0_0_12px_rgba(251,191,36,0.25)]'
-          : 'border-white/10 bg-[var(--ag-panel-60)] hover:border-white/20 hover:bg-white/10',
-        className
-      )}
+    <ShortcutHint
+      label={AGENT_SHORTCUTS.temporary.label}
+      keys={AGENT_SHORTCUTS.temporary.keys}
+      side="bottom"
     >
-      <TemporaryGlyph active={active} />
-    </button>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={active}
+        aria-label="Temporary chat"
+        className={cn(
+          'flex size-9 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95',
+          active
+            ? 'border-amber-400/40 bg-amber-400/15 shadow-[0_0_12px_rgba(251,191,36,0.25)]'
+            : 'border-white/10 bg-[var(--ag-panel-60)] hover:border-white/20 hover:bg-white/10',
+          className
+        )}
+      >
+        <TemporaryGlyph active={active} />
+      </button>
+    </ShortcutHint>
   )
 }

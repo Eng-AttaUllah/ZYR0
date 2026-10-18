@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { History, Plus, Settings, ChevronLeft, ChevronRight, ChevronDown, Search } from 'lucide-react';
+import { AGENT_SHORTCUTS } from '@/agent/hooks/useAgentShortcuts';
+import { ShortcutHint } from '@/agent/components/ShortcutHint';
 
 export interface SidebarHistoryItem {
   id: string;
@@ -190,29 +192,39 @@ export function AgentSidebar({
                 <span className="text-sm font-semibold text-white tracking-tight">ZYR0 Research</span>
               </span>
               <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onSearchOpenChange(!searchOpen)}
-                  aria-label="Search chats"
-                  aria-expanded={searchOpen}
-                  aria-controls="agent-sidebar-search"
-                  title="Search chats"
-                  className={`size-10 flex items-center justify-center rounded-lg transition-colors ${
-                    searchOpen
-                      ? 'bg-white/10 text-white'
-                      : 'text-[var(--ag-text-5)] hover:text-white hover:bg-white/5'
-                  }`}
+                <ShortcutHint
+                  label={AGENT_SHORTCUTS.search.label}
+                  keys={AGENT_SHORTCUTS.search.keys}
+                  side="bottom"
                 >
-                  <Search className="size-4" />
-                </button>
-                <button
-                  onClick={onToggle}
-                  aria-label="Close sidebar"
-                  title="Close sidebar"
-                  className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => onSearchOpenChange(!searchOpen)}
+                    aria-label="Search chats"
+                    aria-expanded={searchOpen}
+                    aria-controls="agent-sidebar-search"
+                    className={`size-10 flex items-center justify-center rounded-lg transition-colors ${
+                      searchOpen
+                        ? 'bg-white/10 text-white'
+                        : 'text-[var(--ag-text-5)] hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Search className="size-4" />
+                  </button>
+                </ShortcutHint>
+                <ShortcutHint
+                  label={AGENT_SHORTCUTS.closeSidebar.label}
+                  keys={AGENT_SHORTCUTS.closeSidebar.keys}
+                  side="bottom"
                 >
-                  <ChevronLeft className="size-4" />
-                </button>
+                  <button
+                    onClick={onToggle}
+                    aria-label="Close sidebar"
+                    className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+                </ShortcutHint>
               </div>
             </>
           ) : (
@@ -241,13 +253,19 @@ export function AgentSidebar({
         {!open && (
           <>
             <div className="flex flex-col items-center gap-2 py-3">
-              <button
-                onClick={onNewSession}
-                className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
-                title="New Chat"
+              <ShortcutHint
+                label={AGENT_SHORTCUTS.newChat.label}
+                keys={AGENT_SHORTCUTS.newChat.keys}
+                side="right"
               >
-                <Plus className="size-4" />
-              </button>
+                <button
+                  onClick={onNewSession}
+                  className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                  aria-label="New Chat"
+                >
+                  <Plus className="size-4" />
+                </button>
+              </ShortcutHint>
               <button
                 onClick={onToggle}
                 className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
@@ -297,13 +315,20 @@ export function AgentSidebar({
 
             {/* New Chat button */}
             <div className="p-3">
-              <button
-                onClick={onNewSession}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all duration-150 active:scale-[0.98]"
+              <ShortcutHint
+                label={AGENT_SHORTCUTS.newChat.label}
+                keys={AGENT_SHORTCUTS.newChat.keys}
+                side="bottom"
+                className="w-full"
               >
-                <Plus className="size-4" />
-                New Chat
-              </button>
+                <button
+                  onClick={onNewSession}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all duration-150 active:scale-[0.98]"
+                >
+                  <Plus className="size-4" />
+                  New Chat
+                </button>
+              </ShortcutHint>
             </div>
 
             {/* Recent — collapsible dropdown */}
