@@ -259,21 +259,29 @@ export default function ResearchAgentPage() {
   // Quick-actions "Search": unfold the sidebar if it is collapsed, reveal the
   // search box and put the caret in it (autoFocus covers the mount case; the
   // timeout refocuses when the field was already on screen).
-  const handleOpenSearch = useCallback(() => {
+  // Quick-actions "Search" (Alt+S): toggle the search box — reveal it (unfolding
+  // a collapsed sidebar first) and put the caret in it, or hide it again.
+  const handleToggleSearch = useCallback(() => {
+    if (sidebarSearchOpen) {
+      setSidebarSearchOpen(false);
+      return;
+    }
     setSidebarOpen(true);
     setSidebarSearchOpen(true);
     window.setTimeout(() => {
       document.getElementById('agent-sidebar-search-input')?.focus();
     }, 0);
-  }, []);
+  }, [sidebarSearchOpen]);
+
+  const handleToggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
   // Keyboard shortcuts: Alt+N new chat · Alt+T temporary chat · Alt+S search ·
-  // Alt+L close sidebar (Alt rather than Ctrl — browsers reserve Ctrl+N/T/L).
+  // Alt+L sidebar (Alt rather than Ctrl — browsers reserve Ctrl+N/T/L).
   useAgentShortcuts({
     onNewChat: handleNewSession,
     onToggleTemporary: handleToggleTemporary,
-    onOpenSearch: handleOpenSearch,
-    onCloseSidebar: () => setSidebarOpen(false),
+    onToggleSearch: handleToggleSearch,
+    onToggleSidebar: handleToggleSidebar,
   });
 
   // --- Settings panel ------------------------------------------------------

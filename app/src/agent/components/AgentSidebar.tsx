@@ -193,7 +193,9 @@ export function AgentSidebar({
               </span>
               <div className="flex shrink-0 items-center gap-1">
                 <ShortcutHint
-                  label={AGENT_SHORTCUTS.search.label}
+                  label={
+                    searchOpen ? AGENT_SHORTCUTS.closeSearch.label : AGENT_SHORTCUTS.search.label
+                  }
                   keys={AGENT_SHORTCUTS.search.keys}
                   side="bottom"
                 >
@@ -229,14 +231,19 @@ export function AgentSidebar({
             </>
           ) : (
             <>
-              <button
-                onClick={onToggle}
-                aria-label="Open sidebar"
-                title="Open sidebar"
-                className="size-7 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+              <ShortcutHint
+                label={AGENT_SHORTCUTS.openSidebar.label}
+                keys={AGENT_SHORTCUTS.openSidebar.keys}
+                side="right"
               >
-                <ChevronRight className="size-4" />
-              </button>
+                <button
+                  onClick={onToggle}
+                  aria-label="Open sidebar"
+                  className="size-7 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </ShortcutHint>
               <button
                 onClick={onToggle}
                 aria-label="ZYR0 Research"
