@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { History, Plus, Settings, ChevronLeft, ChevronRight, ChevronDown, Search } from 'lucide-react';
 import { AGENT_SHORTCUTS } from '@/agent/hooks/useAgentShortcuts';
 import { ShortcutHint } from '@/agent/components/ShortcutHint';
@@ -139,6 +139,74 @@ export function AgentSidebar({
 }) {
   const [search, setSearch] = useState('');
   const [recentOpen, setRecentOpen] = useState(true);
+  // Hover/focus peek: while the sidebar is pinned closed on desktop, resting
+  // the pointer (or tabbing) onto the 48px rail reveals the full panel; moving
+  // away hides it again. Peeking never changes the pinned `open` state.
+  const [peek, setPeek] = useState(false);
+  const leaveTimer = useRef<number | null>(null);
+
+  const expanded = open || peek;
+
+  const cancelLeave = () => {
+    if (leaveTimer.current !== null) {
+      window.clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+  };
+
+  useEffect(() => cancelLeave, []);
+
+  // Pinning the sidebar open makes a leftover peek state meaningless.
+  useEffect(() => {
+    if (open) setPeek(false);
+  }, [open]);
+
+  // The rail only exists on desktop; below `lg` the closed sidebar is
+  // off-canvas, so pointer/focus reveals would be surprising there.
+  const canPeek = () => window.innerWidth >= 1024;
+
+  const handleEnter = () => {
+    cancelLeave();
+    if (!open && canPeek()) setPeek(true);
+  };
+
+  // Short grace period so brushing past the rail doesn't slam it shut.
+  const handleLeave = () => {
+    if (open) return;
+    cancelLeave();
+    leaveTimer.current = window.setTimeout(() => {
+      leaveTimer.current = null;
+      setPeek(false);
+    }, 180);
+  };
+
+
+  // Actions taken inside a peek dismiss it, so the panel doesn't linger.
+  const dismissPeek = () => {
+    if (!open) setPeek(false);
+  };
+
+  const handleNewSession = () => {
+    dismissPeek();
+    onNewSession();
+  };
+
+  const handleSelectHistory = (id: string, mode: string) => {
+    dismissPeek();
+    onSelectHistory?.(id, mode);
+  };
+
+  const handleOpenSettings = () => {
+    dismissPeek();
+    onOpenSettings?.();
+  };
+
+  // While peeking `open` is still false, so the header's close button must
+  // dismiss the peek instead of pinning the sidebar open.
+  const handleClose = () => {
+    if (open) onToggle();
+    else setPeek(false);
+  };
 
   const closeSearch = () => {
     onSearchOpenChange(false);
@@ -173,8 +241,10 @@ export function AgentSidebar({
 
       {/* Sidebar */}
       <div
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
         className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-[var(--ag-rail)] border-r border-white/5 transition-all duration-300 ease-out max-w-[85vw] ${
-          open
+          expanded
             ? 'w-[280px] translate-x-0'
             : 'w-[280px] -translate-x-full lg:translate-x-0 lg:w-[48px]'
         }`}
@@ -182,10 +252,10 @@ export function AgentSidebar({
         {/* Top section */}
         <div
           className={`flex border-b border-white/5 ${
-            open ? 'items-center justify-between p-3' : 'flex-col items-center gap-1 p-2'
+            expanded ? 'items-center justify-between p-3' : 'flex-col items-center gap-1 p-2'
           }`}
         >
-          {open ? (
+          {expanded ? (
             <>
               <span className="flex min-w-0 items-center gap-2">
                 <ResearchLogo className="size-7 shrink-0" />
@@ -220,7 +290,7 @@ export function AgentSidebar({
                   side="bottom"
                 >
                   <button
-                    onClick={onToggle}
+                    onClick={handleClose}
                     aria-label="Close sidebar"
                     className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                   >
@@ -257,7 +327,7 @@ export function AgentSidebar({
         </div>
 
         {/* Collapsed icon-only nav */}
-        {!open && (
+        {!expanded && (
           <>
             <div className="flex flex-col items-center gap-2 py-3">
               <ShortcutHint
@@ -266,7 +336,7 @@ export function AgentSidebar({
                 side="right"
               >
                 <button
-                  onClick={onNewSession}
+                  onClick={handleNewSession}
                   className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
                   aria-label="New Chat"
                 >
@@ -285,7 +355,7 @@ export function AgentSidebar({
             {/* Bottom: Settings — mirrors the expanded sidebar's bottom section */}
             <div className="mt-auto flex flex-col items-center gap-2 p-2 border-t border-white/5">
               <button
-                onClick={onOpenSettings}
+                onClick={handleOpenSettings}
                 aria-label="Settings"
                 title="Settings"
                 className="size-10 flex items-center justify-center rounded-lg text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
@@ -297,7 +367,7 @@ export function AgentSidebar({
         )}
 
         {/* Expanded content */}
-        {open && (
+        {expanded && (
           <div className="flex flex-col flex-1 min-h-0">
             {/* Search — revealed by the top-bar button */}
             {searchOpen && (
@@ -329,7 +399,7 @@ export function AgentSidebar({
                 className="w-full"
               >
                 <button
-                  onClick={onNewSession}
+                  onClick={handleNewSession}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all duration-150 active:scale-[0.98]"
                 >
                   <Plus className="size-4" />
@@ -373,7 +443,7 @@ export function AgentSidebar({
                       {filtered.map((item) => (
                         <button
                           key={item.id}
-                          onClick={() => onSelectHistory?.(item.id, item.mode)}
+                          onClick={() => handleSelectHistory(item.id, item.mode)}
                           className={`w-full flex items-start gap-2.5 px-2.5 py-2.5 rounded-lg text-left transition-colors duration-150 ${
                             activeId === item.id
                               ? 'bg-white/10 text-white'
@@ -400,7 +470,7 @@ export function AgentSidebar({
             {/* Bottom: Settings */}
             <div className="p-3 border-t border-white/5">
               <button
-                onClick={onOpenSettings}
+                onClick={handleOpenSettings}
                 className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm text-[var(--ag-text-5)] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <Settings className="size-4" />
