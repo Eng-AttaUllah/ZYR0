@@ -56,9 +56,9 @@ const WHATSAPP_URL = 'https://chat.whatsapp.com/H8NzGKmWBkmDRkUg4p67Gj?s=cl&p=a&
 
 // Seeded from the current release — refresh on every version bump.
 const WHATS_NEW: string[] = [
+  'Hovering the collapsed rail peeks the sidebar open',
   'Keyboard shortcuts: Alt+N new chat, Alt+T temporary, Alt+S search, Alt+L sidebar',
   'Chat replies render as formatted markdown while they stream',
-  'Richer About pane, plus a WhatsApp link to reach the team',
 ];
 
 function SectionHeading({ children }: { children: React.ReactNode }) {

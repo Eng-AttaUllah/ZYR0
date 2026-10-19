@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-All 186 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 2.80.2).
+All 188 commits between `main` and `develop` — one entry per commit, versioned per the project's patch-then-minor scheme (0.38.3 → 2.80.4).
+
+### 2026-10-19
+
+- **`3963387`** 2.80.4 — feat(agent): peek the sidebar open when hovering the collapsed rail (PR #150)
 
 ### 2026-10-18
 
+- **`77f65b8`** 2.80.3 — feat(agent): trim the About pane to WhatsApp support, log the release (PR #150)
 - **`7222d2c`** 2.80.2 — feat(agent): make the panel shortcuts toggles (PR #150)
 - **`f42f76d`** 2.80.1 — feat(agent): keyboard shortcuts with hover hints, drop the quick-actions FAB (PR #150)
 - **`f81d2f1`** 2.80.0 — feat(agent): floating quick-actions button with hover flyout (PR #150)
